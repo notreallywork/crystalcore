@@ -1,13 +1,17 @@
 // Crystal Core - TypeScript Type Definitions
 
-export type ProfileId = 'emerson' | 'kyra';
+export type ProfileId = string;
 export type SteeringMode = 'auto' | 'manual';
 export type GateType = 'green' | 'purple' | 'skip';
 export type NodeType = 'stat' | 'cosmetic' | 'milestone';
 export type InteractionType = 'drag' | 'numpad';
+export type CompetencyLevel = 'beginner' | 'intermediate' | 'advanced';
 
 export interface Profile {
   id: ProfileId;
+  name: string;
+  age: number;
+  competency: CompetencyLevel;
   shards: number;
   treeIndex: number;
   unlockedNodes: string[];
@@ -26,12 +30,14 @@ export interface Profile {
     steering: SteeringMode;
   };
   lastPlayed: string | null;
+  totalDistance: number;
+  totalRaces: number;
+  bestDistance: number;
 }
 
 export interface GameState {
-  emerson: Profile;
-  kyra: Profile;
-  activeProfile: ProfileId | null;
+  profiles: Profile[];
+  activeProfileId: ProfileId | null;
   version: number;
 }
 
@@ -83,7 +89,7 @@ export interface TechTreeNode {
 }
 
 export interface TechTreeData {
-  profile: ProfileId;
+  profile: string;
   nodes: TechTreeNode[];
 }
 
@@ -123,6 +129,7 @@ export interface Gate {
   type: GateType;
   problem: MathProblem | null;
   solved: boolean | null;
+  approached: boolean;
 }
 
 export interface Particle {

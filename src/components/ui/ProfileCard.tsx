@@ -6,100 +6,88 @@ interface ProfileCardProps {
   profile: Profile;
   isLastPlayed: boolean;
   onClick: () => void;
+  onDelete?: () => void;
 }
 
-export function ProfileCard({ profile, isLastPlayed, onClick }: ProfileCardProps) {
-  const isEmerson = profile.id === 'emerson';
-  
+export function ProfileCard({ profile, isLastPlayed, onClick, onDelete }: ProfileCardProps) {
   return (
     <motion.button
       onClick={onClick}
-      className={`relative w-full max-w-sm p-6 rounded-3xl border-4 transition-all ${
-        isEmerson
-          ? 'bg-gradient-to-br from-green-900/80 to-emerald-950/80 border-green-400 hover:border-green-300'
-          : 'bg-gradient-to-br from-purple-900/80 to-violet-950/80 border-purple-400 hover:border-purple-300'
-      }`}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      initial={{ opacity: 0, y: 20 }}
+      className="relative w-full p-5 rounded-2xl border-2 transition-all bg-white/5 hover:bg-white/8 border-white/10 hover:border-white/20 text-left"
+      whileHover={{ scale: 1.01 }}
+      whileTap={{ scale: 0.99 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
     >
       {/* Last Played Badge */}
       {isLastPlayed && (
-        <motion.div
-          className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-yellow-400 text-yellow-950 text-sm font-bold rounded-full"
-          animate={{ y: [0, -3, 0] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-        >
+        <div className="absolute -top-2.5 left-4 px-3 py-0.5 bg-cyan-500 text-white text-xs font-bold rounded-full">
           Last Played
-        </motion.div>
+        </div>
       )}
 
-      {/* Avatar */}
-      <div className="flex justify-center mb-4">
-        <motion.div
-          className={`w-24 h-24 rounded-full flex items-center justify-center ${
-            isEmerson ? 'bg-green-500/30' : 'bg-purple-500/30'
-          }`}
-          animate={{ rotate: [0, 5, -5, 0] }}
-          transition={{ duration: 4, repeat: Infinity }}
+      <div className="flex items-center gap-4">
+        {/* Avatar */}
+        <div
+          className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0"
+          style={{ backgroundColor: profile.cosmetics.color + '20' }}
         >
           <svg
-            className="w-16 h-16"
+            className="w-8 h-8"
             viewBox="0 0 100 100"
             fill={profile.cosmetics.color}
           >
-            {/* Ship shape */}
             <path d="M50 10 L70 70 L50 55 L30 70 Z" />
-            {/* Engine glow */}
-            <circle cx="50" cy="75" r="8" fill="#00D9FF" opacity="0.8" />
+            <circle cx="50" cy="75" r="6" fill="#00D9FF" opacity="0.8" />
           </svg>
-        </motion.div>
-      </div>
-
-      {/* Name */}
-      <h2 className={`text-3xl font-bold text-center mb-2 ${
-        isEmerson ? 'text-green-300' : 'text-purple-300'
-      }`}>
-        {isEmerson ? 'Emerson' : 'Kyra'}
-      </h2>
-
-      {/* Age indicator */}
-      <p className="text-center text-white/60 text-sm mb-4">
-        Age {isEmerson ? '7' : '11'}
-      </p>
-
-      {/* Shards */}
-      <div className="flex justify-center">
-        <ShardCounter count={profile.shards} size="md" />
-      </div>
-
-      {/* Steering mode indicator */}
-      <div className="mt-4 text-center">
-        <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-          isEmerson
-            ? 'bg-green-500/30 text-green-300'
-            : 'bg-purple-500/30 text-purple-300'
-        }`}>
-          {profile.preferences.steering === 'auto' ? 'Auto-Steer' : 'Manual Steering'}
-        </span>
-      </div>
-
-      {/* Progress indicator */}
-      <div className="mt-4">
-        <div className="flex justify-between text-xs text-white/50 mb-1">
-          <span>Progress</span>
-          <span>{profile.treeIndex}/20</span>
         </div>
-        <div className="h-2 bg-black/40 rounded-full overflow-hidden">
-          <motion.div
-            className={`h-full rounded-full ${isEmerson ? 'bg-green-400' : 'bg-purple-400'}`}
-            initial={{ width: 0 }}
-            animate={{ width: `${(profile.treeIndex / 20) * 100}%` }}
-            transition={{ duration: 1, delay: 0.3 }}
-          />
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <h3 className="text-lg font-bold text-white truncate">{profile.name}</h3>
+            <span className="text-white/30 text-xs">Age {profile.age}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <ShardCounter count={profile.shards} size="sm" animated={false} />
+            <span className="text-white/20 text-xs">|</span>
+            <span className="text-white/40 text-xs">
+              {profile.preferences.steering === 'auto' ? 'Auto-Steer' : 'Manual'}
+            </span>
+            <span className="text-white/20 text-xs">|</span>
+            <span className="text-white/40 text-xs capitalize">
+              {profile.competency}
+            </span>
+          </div>
+          {/* Progress bar */}
+          <div className="mt-2 flex items-center gap-2">
+            <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-purple-400"
+                initial={{ width: 0 }}
+                animate={{ width: `${(profile.treeIndex / 20) * 100}%` }}
+                transition={{ duration: 0.8 }}
+              />
+            </div>
+            <span className="text-white/30 text-[10px] font-mono">{profile.treeIndex}/20</span>
+          </div>
         </div>
       </div>
+
+      {/* Delete button */}
+      {onDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white/5 hover:bg-red-500/20 flex items-center justify-center text-white/20 hover:text-red-400 transition-colors pointer-events-auto"
+        >
+          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+          </svg>
+        </button>
+      )}
     </motion.button>
   );
 }

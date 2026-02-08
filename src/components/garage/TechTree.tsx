@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Profile, TechTreeNode } from '@/types';
-import { ProgressionEngine } from '@/engines/ProgressionEngine';
 import { useGameStore } from '@/stores/gameStore';
-import { ShardCounter } from '@/components/ui/ShardCounter';
+import { ProgressionEngine } from '@/engines/ProgressionEngine';
+import { ShardCounter } from '../ui/ShardCounter';
 
 interface TechTreeProps {
   profile: Profile;
@@ -12,256 +12,204 @@ interface TechTreeProps {
 export function TechTree({ profile }: TechTreeProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [selectedNode, setSelectedNode] = useState<TechTreeNode | null>(null);
-  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
-  
   const { purchaseNode, canAffordNode } = useGameStore();
-  
+
   const nodes = ProgressionEngine.getAllNodes(profile);
-  const currentNodeIndex = profile.treeIndex;
 
-  const handleNodeClick = (node: TechTreeNode, index: number) => {
-    if (index === currentNodeIndex) {
-      setSelectedNode(node);
-      setShowPurchaseModal(true);
+  const handlePurchase = (node: TechTreeNode) => {
+    const success = purchaseNode(node);
+    if (success) {
+      setSelectedNode(null);
     }
   };
 
-  const handlePurchase = () => {
-    if (selectedNode) {
-      const success = purchaseNode(selectedNode);
-      if (success) {
-        setShowPurchaseModal(false);
-        setSelectedNode(null);
-      }
+  const getNodeColor = (node: TechTreeNode, index: number): string => {
+    if (index < profile.treeIndex) return 'rgb(34, 197, 94)';
+    if (index === profile.treeIndex) {
+      return canAffordNode(node) ? 'rgb(0, 217, 255)' : 'rgb(107, 114, 128)';
     }
+    return 'rgb(55, 65, 81)';
   };
 
-  const getNodeStatus = (index: number) => {
-    if (index < currentNodeIndex) return 'unlocked';
-    if (index === currentNodeIndex) return 'current';
-    return 'locked';
+  const getNodeBg = (index: number): string => {
+    if (index < profile.treeIndex) return 'bg-green-500/15 border-green-500/30';
+    if (index === profile.treeIndex) return 'bg-cyan-500/10 border-cyan-500/30';
+    return 'bg-gray-800/30 border-gray-700/20';
   };
 
-  const getNodeColor = (node: TechTreeNode, status: string) => {
-    if (status === 'locked') return 'bg-gray-700 border-gray-600';
-    if (status === 'unlocked') {
-      if (node.type === 'stat') return 'bg-blue-500 border-blue-400';
-      if (node.type === 'cosmetic') return 'bg-purple-500 border-purple-400';
-      return 'bg-yellow-500 border-yellow-400';
-    }
-    // Current
-    if (node.type === 'stat') return 'bg-blue-400 border-blue-300 animate-pulse';
-    if (node.type === 'cosmetic') return 'bg-purple-400 border-purple-300 animate-pulse';
-    return 'bg-yellow-400 border-yellow-300 animate-pulse';
-  };
-
-  const getNodeIcon = (node: TechTreeNode) => {
-    switch (node.visual) {
-      case 'add-wings-blue':
-      case 'add-wings-gold':
-      case 'add-wings-rainbow':
-      case 'add-wings-crystal':
-        return '✈️';
-      case 'paint-ship':
-        return '🎨';
-      case 'add-shield':
-      case 'add-shield-gold':
-      case 'add-shield-crystal':
-        return '🛡️';
-      case 'add-trail':
-        return '✨';
-      case 'add-boost':
-      case 'add-boost-gold':
-        return '🚀';
-      case 'change-shape':
-        return '🔷';
-      case 'unlock-track':
-        return '🏁';
-      default:
-        return '⭐';
+  const getTypeIcon = (type: string): string => {
+    switch (type) {
+      case 'stat': return 'S';
+      case 'cosmetic': return 'C';
+      case 'milestone': return 'M';
+      default: return '?';
     }
   };
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-black/40">
-        <div>
-          <h2 className="text-2xl font-bold text-white">Tech Tree</h2>
-          <p className="text-white/60 text-sm">
-            {profile.id === 'emerson' ? "Emerson's Upgrades" : "Kyra's Upgrades"}
-          </p>
+      {/* Shard Display */}
+      <div className="flex items-center justify-between px-4 py-3 bg-white/3 border-b border-white/5">
+        <div className="flex items-center gap-3">
+          <ShardCounter count={profile.shards} size="md" />
         </div>
-        <ShardCounter count={profile.shards} size="lg" />
-      </div>
-
-      {/* Progress Bar */}
-      <div className="px-4 py-2 bg-black/20">
-        <div className="flex justify-between text-xs text-white/50 mb-1">
-          <span>Overall Progress</span>
-          <span>{currentNodeIndex}/20 Nodes</span>
-        </div>
-        <div className="h-2 bg-black/40 rounded-full overflow-hidden">
-          <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-purple-400"
-            initial={{ width: 0 }}
-            animate={{ width: `${(currentNodeIndex / 20) * 100}%` }}
-            transition={{ duration: 1 }}
-          />
+        <div className="text-white/30 text-xs">
+          {profile.treeIndex} / {nodes.length} unlocked
         </div>
       </div>
 
-      {/* Tree Container */}
+      {/* Scrollable Tree */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hide"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hide px-6"
       >
-        <div className="flex items-center px-8 py-12 min-w-max">
-          {/* Connection Line */}
-          <div className="absolute left-8 right-8 h-1 bg-white/10" style={{ top: '50%' }} />
-
+        <div className="flex items-center h-full min-w-max py-6 gap-3">
           {nodes.map((node, index) => {
-            const status = getNodeStatus(index);
-            const isClickable = status === 'current';
+            const isUnlocked = index < profile.treeIndex;
+            const isCurrent = index === profile.treeIndex;
+            const isLocked = index > profile.treeIndex;
+            const affordable = canAffordNode(node);
 
             return (
-              <motion.div
-                key={node.id}
-                className="relative mx-4"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
+              <div key={node.id} className="flex items-center">
+                {/* Connector line */}
+                {index > 0 && (
+                  <div className={`w-6 h-0.5 ${isUnlocked ? 'bg-green-500/40' : 'bg-gray-700/30'}`} />
+                )}
+
                 {/* Node */}
                 <motion.button
-                  onClick={() => handleNodeClick(node, index)}
-                  disabled={!isClickable}
-                  className={`relative w-20 h-20 rounded-full border-4 flex items-center justify-center text-3xl ${
-                    getNodeColor(node, status)
-                  } ${isClickable ? 'cursor-pointer hover:scale-110' : 'cursor-default'}`}
-                  whileHover={isClickable ? { scale: 1.1 } : {}}
-                  whileTap={isClickable ? { scale: 0.95 } : {}}
+                  onClick={() => setSelectedNode(node)}
+                  className={`relative w-20 h-20 rounded-2xl border-2 flex flex-col items-center justify-center shrink-0 ${getNodeBg(index)} ${
+                    isCurrent && affordable ? 'animate-pulse' : ''
+                  }`}
+                  style={{ borderColor: getNodeColor(node, index) + '60' }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  {status === 'unlocked' ? (
-                    <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                  {/* Type indicator */}
+                  <div
+                    className="text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center absolute top-1 right-1"
+                    style={{ color: getNodeColor(node, index) }}
+                  >
+                    {getTypeIcon(node.type)}
+                  </div>
+
+                  {/* Icon */}
+                  {isUnlocked && (
+                    <svg className="w-6 h-6 text-green-400 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                  ) : (
-                    getNodeIcon(node)
                   )}
 
-                  {/* Cost Badge */}
-                  {status === 'current' && (
-                    <div className="absolute -bottom-2 -right-2 bg-yellow-500 text-yellow-950 text-xs font-bold px-2 py-1 rounded-full">
-                      {node.cost}
+                  {isCurrent && (
+                    <div className="text-xl mb-0.5" style={{ color: affordable ? '#00D9FF' : '#6B7280' }}>
+                      {affordable ? '+' : '?'}
                     </div>
                   )}
 
-                  {/* Type Indicator */}
-                  <div
-                    className={`absolute -top-2 -left-2 w-5 h-5 rounded-full text-xs flex items-center justify-center ${
-                      node.type === 'stat'
-                        ? 'bg-blue-400 text-blue-950'
-                        : node.type === 'cosmetic'
-                        ? 'bg-purple-400 text-purple-950'
-                        : 'bg-yellow-400 text-yellow-950'
-                    }`}
-                  >
-                    {node.type === 'stat' ? 'S' : node.type === 'cosmetic' ? 'C' : 'M'}
-                  </div>
+                  {isLocked && (
+                    <svg className="w-5 h-5 text-gray-600 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <rect x="3" y="11" width="18" height="11" rx="2" />
+                      <path d="M7 11V7a5 5 0 0110 0v4" />
+                    </svg>
+                  )}
+
+                  {/* Cost */}
+                  <span className={`text-[10px] font-bold ${isUnlocked ? 'text-green-400/60' : isCurrent ? 'text-white/60' : 'text-gray-600'}`}>
+                    {isUnlocked ? 'Owned' : `${node.cost}`}
+                  </span>
                 </motion.button>
-
-                {/* Node Label */}
-                <div className="absolute top-24 left-1/2 -translate-x-1/2 text-center w-24">
-                  <p className="text-white text-xs font-medium truncate">{node.name}</p>
-                </div>
-
-                {/* Connection to next node */}
-                {index < nodes.length - 1 && (
-                  <div
-                    className={`absolute top-1/2 left-full w-8 h-0.5 ${
-                      index < currentNodeIndex ? 'bg-green-400' : 'bg-white/20'
-                    }`}
-                  />
-                )}
-              </motion.div>
+              </div>
             );
           })}
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="flex justify-center gap-6 p-4 bg-black/40 text-xs">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-blue-500" />
-          <span className="text-white/60">Stat Boost</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-purple-500" />
-          <span className="text-white/60">Cosmetic</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-yellow-500" />
-          <span className="text-white/60">Milestone</span>
-        </div>
-      </div>
-
-      {/* Purchase Modal */}
+      {/* Node Detail Panel */}
       <AnimatePresence>
-        {showPurchaseModal && selectedNode && (
+        {selectedNode && (
           <motion.div
-            className="absolute inset-0 bg-black/80 flex items-center justify-center p-4 z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowPurchaseModal(false)}
+            className="bg-white/5 border-t border-white/10 p-5 backdrop-blur-md"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           >
-            <motion.div
-              className="bg-gray-900 rounded-3xl p-8 max-w-sm w-full border-2 border-white/20"
-              initial={{ scale: 0.8, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.8, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="text-center mb-6">
-                <div className="text-6xl mb-4">{getNodeIcon(selectedNode)}</div>
-                <h3 className="text-2xl font-bold text-white mb-2">{selectedNode.name}</h3>
-                <p className="text-white/60">{selectedNode.description}</p>
+            <div className="max-w-lg mx-auto">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h3 className="text-lg font-bold text-white">{selectedNode.name}</h3>
+                  <p className="text-white/50 text-sm">{selectedNode.description}</p>
+                </div>
+                <button
+                  onClick={() => setSelectedNode(null)}
+                  className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/40 hover:text-white transition-colors"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+                  </svg>
+                </button>
               </div>
 
-              <div className="flex items-center justify-center gap-2 mb-6">
-                <span className="text-white/60">Cost:</span>
+              {/* Node type badge */}
+              <div className="flex items-center gap-3 mb-4">
+                <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
+                  selectedNode.type === 'stat' ? 'bg-blue-500/20 text-blue-300' :
+                  selectedNode.type === 'cosmetic' ? 'bg-purple-500/20 text-purple-300' :
+                  'bg-yellow-500/20 text-yellow-300'
+                }`}>
+                  {selectedNode.type.charAt(0).toUpperCase() + selectedNode.type.slice(1)}
+                </span>
                 <div className="flex items-center gap-1">
-                  <svg className="w-5 h-5 text-yellow-400" viewBox="0 0 24 24" fill="currentColor">
+                  <svg className="w-3.5 h-3.5 text-yellow-400" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2L2 12l10 10 10-10L12 2zm0 3.5L18.5 12 12 18.5 5.5 12 12 5.5z" />
                   </svg>
-                  <span className="text-xl font-bold text-yellow-400">{selectedNode.cost}</span>
+                  <span className="text-yellow-400 text-sm font-bold">{selectedNode.cost}</span>
                 </div>
               </div>
 
-              <div className="flex gap-4">
-                <motion.button
-                  onClick={() => setShowPurchaseModal(false)}
-                  className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-white font-medium"
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Cancel
-                </motion.button>
-                <motion.button
-                  onClick={handlePurchase}
-                  disabled={!canAffordNode(selectedNode)}
-                  className={`flex-1 py-3 rounded-xl font-medium ${
-                    canAffordNode(selectedNode)
-                      ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:opacity-90'
-                      : 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                  }`}
-                  whileTap={canAffordNode(selectedNode) ? { scale: 0.95 } : {}}
-                >
-                  {canAffordNode(selectedNode) ? 'Buy!' : 'Need More Shards'}
-                </motion.button>
-              </div>
-            </motion.div>
+              {/* Purchase button */}
+              {(() => {
+                const nodeIndex = nodes.findIndex((n) => n.id === selectedNode.id);
+                const isUnlocked = nodeIndex < profile.treeIndex;
+                const isCurrent = nodeIndex === profile.treeIndex;
+                const affordable = canAffordNode(selectedNode);
+
+                if (isUnlocked) {
+                  return (
+                    <div className="py-3 text-center text-green-400/60 text-sm font-medium">
+                      Already Unlocked
+                    </div>
+                  );
+                }
+
+                if (!isCurrent) {
+                  return (
+                    <div className="py-3 text-center text-gray-500 text-sm font-medium">
+                      Unlock previous nodes first
+                    </div>
+                  );
+                }
+
+                return (
+                  <motion.button
+                    onClick={() => handlePurchase(selectedNode)}
+                    disabled={!affordable}
+                    className={`w-full py-3.5 rounded-xl font-bold text-sm transition-all ${
+                      affordable
+                        ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/20'
+                        : 'bg-gray-800/50 text-gray-500 cursor-not-allowed'
+                    }`}
+                    whileTap={affordable ? { scale: 0.97 } : {}}
+                  >
+                    {affordable
+                      ? `Purchase for ${selectedNode.cost} Shards`
+                      : `Need ${selectedNode.cost - profile.shards} more Shards`}
+                  </motion.button>
+                );
+              })()}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
