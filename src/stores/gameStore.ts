@@ -1,85 +1,81 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Profile, ProfileId, RaceSession, TechTreeNode } from '@/types';
+import type { Profile, ProfileId, RaceSession, TechTreeNode, CompetencyLevel } from '@/types';
 import { ProgressionEngine } from '@/engines/ProgressionEngine';
 
-const CURRENT_VERSION = 1;
+const CURRENT_VERSION = 2;
 
-const defaultEmersonProfile: Profile = {
-  id: 'emerson',
-  shards: 0,
-  treeIndex: 0,
-  unlockedNodes: [],
-  difficulty: 1,
-  stats: {
-    speed: 1.0,
-    shield: 3,
-    boostDuration: 3,
-  },
-  cosmetics: {
-    color: '#00D9FF',
-    trail: 'none',
-    shipShape: 'default',
-  },
-  preferences: {
-    steering: 'auto',
-  },
-  lastPlayed: null,
-};
+const SHIP_COLORS = [
+  '#00D9FF', '#9D00FF', '#00FF88', '#FF3366', '#FFD700',
+  '#FF6B35', '#00BFFF', '#FF1493', '#7CFC00', '#FF4500',
+];
 
-const defaultKyraProfile: Profile = {
-  id: 'kyra',
-  shards: 0,
-  treeIndex: 0,
-  unlockedNodes: [],
-  difficulty: 1,
-  stats: {
-    speed: 1.0,
-    shield: 3,
-    boostDuration: 3,
-  },
-  cosmetics: {
-    color: '#9D00FF',
-    trail: 'none',
-    shipShape: 'default',
-  },
-  preferences: {
-    steering: 'manual',
-  },
-  lastPlayed: null,
-};
+export function createProfile(
+  name: string,
+  age: number,
+  competency: CompetencyLevel,
+): Profile {
+  const id = `${name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
+  const colorIndex = Math.floor(Math.random() * SHIP_COLORS.length);
+  const isYoung = age <= 8;
+
+  return {
+    id,
+    name,
+    age,
+    competency,
+    shards: 0,
+    treeIndex: 0,
+    unlockedNodes: [],
+    difficulty: competency === 'beginner' ? 1 : competency === 'intermediate' ? 2 : 3,
+    stats: {
+      speed: 1.0,
+      shield: 3,
+      boostDuration: 3,
+    },
+    cosmetics: {
+      color: SHIP_COLORS[colorIndex],
+      trail: 'none',
+      shipShape: 'default',
+    },
+    preferences: {
+      steering: isYoung ? 'auto' : 'manual',
+    },
+    lastPlayed: null,
+    totalDistance: 0,
+    totalRaces: 0,
+    bestDistance: 0,
+  };
+}
 
 interface GameStoreState {
-  emerson: Profile;
-  kyra: Profile;
-  activeProfile: ProfileId | null;
+  profiles: Profile[];
+  activeProfileId: ProfileId | null;
   version: number;
   currentRun: RaceSession | null;
 }
 
 interface GameStoreActions {
-  // Actions
-  setActiveProfile: (profile: ProfileId) => void;
+  addProfile: (name: string, age: number, competency: CompetencyLevel) => Profile;
+  deleteProfile: (profileId: ProfileId) => void;
+  setActiveProfile: (profileId: ProfileId) => void;
+  getActiveProfile: () => Profile | null;
+  getProfile: (profileId: ProfileId) => Profile | null;
+
   startRace: () => void;
   endRace: () => void;
   collectShards: (amount: number) => void;
   hitObstacle: () => boolean;
   passGate: (correct: boolean) => void;
   activateBoost: () => void;
+  decayBoost: (deltaTime: number) => void;
   updateDistance: (distance: number) => void;
-  
-  // Tech Tree
+
   canAffordNode: (node: TechTreeNode) => boolean;
   purchaseNode: (node: TechTreeNode) => boolean;
-  
-  // Profile
+
   updateProfile: (profileId: ProfileId, updates: Partial<Profile>) => void;
-  getActiveProfileData: () => Profile | null;
-  
-  // Difficulty
   adjustDifficulty: (sessionResults: { gatesAttempted: number; correctAnswers: number; avgTime: number }) => void;
-  
-  // Reset
   resetProfile: (profileId: ProfileId) => void;
 }
 
@@ -88,26 +84,51 @@ type GameStore = GameStoreState & GameStoreActions;
 export const useGameStore = create<GameStore>()(
   persist(
     (set, get) => ({
-      emerson: { ...defaultEmersonProfile },
-      kyra: { ...defaultKyraProfile },
-      activeProfile: null,
+      profiles: [],
+      activeProfileId: null,
       version: CURRENT_VERSION,
       currentRun: null,
 
-      setActiveProfile: (profile) => {
+      addProfile: (name, age, competency) => {
+        const profile = createProfile(name, age, competency);
         set((state) => ({
-          activeProfile: profile,
-          [profile]: {
-            ...state[profile],
-            lastPlayed: new Date().toISOString(),
-          },
+          profiles: [...state.profiles, profile],
+        }));
+        return profile;
+      },
+
+      deleteProfile: (profileId) => {
+        set((state) => ({
+          profiles: state.profiles.filter((p) => p.id !== profileId),
+          activeProfileId: state.activeProfileId === profileId ? null : state.activeProfileId,
         }));
       },
 
+      setActiveProfile: (profileId) => {
+        set((state) => ({
+          activeProfileId: profileId,
+          profiles: state.profiles.map((p) =>
+            p.id === profileId
+              ? { ...p, lastPlayed: new Date().toISOString() }
+              : p
+          ),
+        }));
+      },
+
+      getActiveProfile: () => {
+        const { profiles, activeProfileId } = get();
+        if (!activeProfileId) return null;
+        return profiles.find((p) => p.id === activeProfileId) || null;
+      },
+
+      getProfile: (profileId) => {
+        return get().profiles.find((p) => p.id === profileId) || null;
+      },
+
       startRace: () => {
-        const profile = get().getActiveProfileData();
+        const profile = get().getActiveProfile();
         if (!profile) return;
-        
+
         set({
           currentRun: {
             distance: 0,
@@ -124,14 +145,21 @@ export const useGameStore = create<GameStore>()(
       },
 
       endRace: () => {
-        const { currentRun, activeProfile } = get();
-        if (!currentRun || !activeProfile) return;
+        const { currentRun, activeProfileId } = get();
+        if (!currentRun || !activeProfileId) return;
 
         set((state) => ({
-          [activeProfile]: {
-            ...state[activeProfile],
-            shards: state[activeProfile].shards + currentRun.shardsCollected,
-          },
+          profiles: state.profiles.map((p) =>
+            p.id === activeProfileId
+              ? {
+                  ...p,
+                  shards: p.shards + currentRun.shardsCollected,
+                  totalDistance: p.totalDistance + currentRun.distance,
+                  totalRaces: p.totalRaces + 1,
+                  bestDistance: Math.max(p.bestDistance, currentRun.distance),
+                }
+              : p
+          ),
           currentRun: null,
         }));
       },
@@ -149,22 +177,23 @@ export const useGameStore = create<GameStore>()(
       },
 
       hitObstacle: () => {
-        const { currentRun, activeProfile, emerson, kyra } = get();
-        if (!currentRun || !activeProfile) return false;
+        const { currentRun, activeProfileId, profiles } = get();
+        if (!currentRun || !activeProfileId) return false;
 
-        const profile = activeProfile === 'emerson' ? emerson : kyra;
+        const profile = profiles.find((p) => p.id === activeProfileId);
+        if (!profile) return false;
+
         const newHits = currentRun.shieldHits + 1;
         const maxHits = profile.stats.shield;
 
         if (newHits >= maxHits) {
-          // Shield depleted - respawn at checkpoint
           set((state) => ({
             currentRun: {
               ...state.currentRun!,
               shieldHits: 0,
             },
           }));
-          return true; // Indicates respawn needed
+          return true;
         }
 
         set((state) => ({
@@ -191,11 +220,9 @@ export const useGameStore = create<GameStore>()(
       },
 
       activateBoost: () => {
-        const { activeProfile, emerson, kyra } = get();
-        if (!activeProfile) return;
-        
-        const profile = activeProfile === 'emerson' ? emerson : kyra;
-        
+        const profile = get().getActiveProfile();
+        if (!profile) return;
+
         set((state) => {
           if (!state.currentRun) return state;
           return {
@@ -203,6 +230,28 @@ export const useGameStore = create<GameStore>()(
               ...state.currentRun,
               isBoosting: true,
               boostTimeLeft: profile.stats.boostDuration,
+            },
+          };
+        });
+      },
+
+      decayBoost: (deltaTime) => {
+        set((state) => {
+          if (!state.currentRun || !state.currentRun.isBoosting) return state;
+          const newTimeLeft = state.currentRun.boostTimeLeft - deltaTime;
+          if (newTimeLeft <= 0) {
+            return {
+              currentRun: {
+                ...state.currentRun,
+                isBoosting: false,
+                boostTimeLeft: 0,
+              },
+            };
+          }
+          return {
+            currentRun: {
+              ...state.currentRun,
+              boostTimeLeft: newTimeLeft,
             },
           };
         });
@@ -221,26 +270,26 @@ export const useGameStore = create<GameStore>()(
       },
 
       canAffordNode: (node) => {
-        const { activeProfile, emerson, kyra } = get();
-        if (!activeProfile) return false;
-        const profile = activeProfile === 'emerson' ? emerson : kyra;
+        const profile = get().getActiveProfile();
+        if (!profile) return false;
         return profile.shards >= node.cost;
       },
 
       purchaseNode: (node) => {
-        const { activeProfile, canAffordNode } = get();
-        if (!activeProfile) return false;
+        const { activeProfileId, canAffordNode } = get();
+        if (!activeProfileId) return false;
         if (!canAffordNode(node)) return false;
 
         set((state) => {
-          const profile = state[activeProfile];
-          const tree = ProgressionEngine.getTechTree(activeProfile);
+          const profile = state.profiles.find((p) => p.id === activeProfileId);
+          if (!profile) return state;
+
+          const tree = ProgressionEngine.getTechTree(profile);
           const nodeIndex = tree.nodes.findIndex((n) => n.id === node.id);
-          
+
           if (nodeIndex === -1) return state;
           if (nodeIndex !== profile.treeIndex) return state;
 
-          // Apply stat upgrades
           const updates: Partial<Profile> = {
             shards: profile.shards - node.cost,
             treeIndex: profile.treeIndex + 1,
@@ -266,10 +315,9 @@ export const useGameStore = create<GameStore>()(
           }
 
           return {
-            [activeProfile]: {
-              ...profile,
-              ...updates,
-            },
+            profiles: state.profiles.map((p) =>
+              p.id === activeProfileId ? { ...p, ...updates } : p
+            ),
           };
         });
 
@@ -278,31 +326,25 @@ export const useGameStore = create<GameStore>()(
 
       updateProfile: (profileId, updates) => {
         set((state) => ({
-          [profileId]: {
-            ...state[profileId],
-            ...updates,
-          },
+          profiles: state.profiles.map((p) =>
+            p.id === profileId ? { ...p, ...updates } : p
+          ),
         }));
       },
 
-      getActiveProfileData: () => {
-        const { activeProfile, emerson, kyra } = get();
-        if (!activeProfile) return null;
-        return activeProfile === 'emerson' ? emerson : kyra;
-      },
-
       adjustDifficulty: (sessionResults) => {
-        const { activeProfile } = get();
-        if (!activeProfile) return;
+        const { activeProfileId } = get();
+        if (!activeProfileId) return;
 
-        const accuracy = sessionResults.gatesAttempted > 0 
-          ? sessionResults.correctAnswers / sessionResults.gatesAttempted 
+        const accuracy = sessionResults.gatesAttempted > 0
+          ? sessionResults.correctAnswers / sessionResults.gatesAttempted
           : 0.5;
 
         set((state) => {
-          const profile = state[activeProfile];
-          let newDifficulty = profile.difficulty;
+          const profile = state.profiles.find((p) => p.id === activeProfileId);
+          if (!profile) return state;
 
+          let newDifficulty = profile.difficulty;
           if (accuracy > 0.8 && profile.difficulty < 5) {
             newDifficulty = profile.difficulty + 1;
           } else if (accuracy < 0.4 && profile.difficulty > 1) {
@@ -311,10 +353,9 @@ export const useGameStore = create<GameStore>()(
 
           if (newDifficulty !== profile.difficulty) {
             return {
-              [activeProfile]: {
-                ...profile,
-                difficulty: newDifficulty,
-              },
+              profiles: state.profiles.map((p) =>
+                p.id === activeProfileId ? { ...p, difficulty: newDifficulty } : p
+              ),
             };
           }
           return state;
@@ -322,10 +363,16 @@ export const useGameStore = create<GameStore>()(
       },
 
       resetProfile: (profileId) => {
-        set({
-          [profileId]: profileId === 'emerson' 
-            ? { ...defaultEmersonProfile } 
-            : { ...defaultKyraProfile },
+        set((state) => {
+          const profile = state.profiles.find((p) => p.id === profileId);
+          if (!profile) return state;
+
+          const reset = createProfile(profile.name, profile.age, profile.competency);
+          return {
+            profiles: state.profiles.map((p) =>
+              p.id === profileId ? { ...reset, id: profileId } : p
+            ),
+          };
         });
       },
     }),
@@ -333,11 +380,66 @@ export const useGameStore = create<GameStore>()(
       name: 'crystal-core-storage',
       version: CURRENT_VERSION,
       partialize: (state) => ({
-        emerson: state.emerson,
-        kyra: state.kyra,
-        activeProfile: state.activeProfile,
+        profiles: state.profiles,
+        activeProfileId: state.activeProfileId,
         version: state.version,
       }),
+      migrate: (persistedState: unknown, version: number) => {
+        const state = persistedState as Record<string, unknown>;
+        if (version < 2) {
+          const profiles: Profile[] = [];
+          const oldEmerson = state.emerson as Record<string, unknown> | undefined;
+          const oldKyra = state.kyra as Record<string, unknown> | undefined;
+
+          if (oldEmerson) {
+            profiles.push({
+              id: 'emerson',
+              name: 'Emerson',
+              age: 7,
+              competency: 'beginner' as const,
+              shards: (oldEmerson.shards as number) || 0,
+              treeIndex: (oldEmerson.treeIndex as number) || 0,
+              unlockedNodes: (oldEmerson.unlockedNodes as string[]) || [],
+              difficulty: (oldEmerson.difficulty as number) || 1,
+              stats: (oldEmerson.stats as Profile['stats']) || { speed: 1.0, shield: 3, boostDuration: 3 },
+              cosmetics: (oldEmerson.cosmetics as Profile['cosmetics']) || { color: '#00D9FF', trail: 'none', shipShape: 'default' },
+              preferences: (oldEmerson.preferences as Profile['preferences']) || { steering: 'auto' },
+              lastPlayed: (oldEmerson.lastPlayed as string) || null,
+              totalDistance: 0,
+              totalRaces: 0,
+              bestDistance: 0,
+            });
+          }
+
+          if (oldKyra) {
+            profiles.push({
+              id: 'kyra',
+              name: 'Kyra',
+              age: 11,
+              competency: 'intermediate' as const,
+              shards: (oldKyra.shards as number) || 0,
+              treeIndex: (oldKyra.treeIndex as number) || 0,
+              unlockedNodes: (oldKyra.unlockedNodes as string[]) || [],
+              difficulty: (oldKyra.difficulty as number) || 1,
+              stats: (oldKyra.stats as Profile['stats']) || { speed: 1.0, shield: 3, boostDuration: 3 },
+              cosmetics: (oldKyra.cosmetics as Profile['cosmetics']) || { color: '#9D00FF', trail: 'none', shipShape: 'default' },
+              preferences: (oldKyra.preferences as Profile['preferences']) || { steering: 'manual' },
+              lastPlayed: (oldKyra.lastPlayed as string) || null,
+              totalDistance: 0,
+              totalRaces: 0,
+              bestDistance: 0,
+            });
+          }
+
+          return {
+            profiles,
+            activeProfileId: state.activeProfile || null,
+            version: CURRENT_VERSION,
+            currentRun: null,
+          };
+        }
+        return state;
+      },
     }
   )
 );

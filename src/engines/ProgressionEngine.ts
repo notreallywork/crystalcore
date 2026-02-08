@@ -4,19 +4,18 @@ import kyraTreeData from '@/content/trees/kyra-tree.json';
 import rubyFlatsData from '@/content/tracks/ruby-flats.json';
 import sapphireCavernsData from '@/content/tracks/sapphire-caverns.json';
 
-// Type assertions for JSON imports
 const emersonTree = emersonTreeData as TechTreeData;
 const kyraTree = kyraTreeData as TechTreeData;
 const rubyFlats = rubyFlatsData as TrackConfig;
 const sapphireCaverns = sapphireCavernsData as TrackConfig;
 
 export class ProgressionEngine {
-  static getTechTree(profileId: 'emerson' | 'kyra'): TechTreeData {
-    return profileId === 'emerson' ? emersonTree : kyraTree;
+  static getTechTree(profile: Profile): TechTreeData {
+    return profile.age <= 8 ? emersonTree : kyraTree;
   }
 
   static getCurrentNode(profile: Profile): TechTreeNode | null {
-    const tree = this.getTechTree(profile.id);
+    const tree = this.getTechTree(profile);
     if (profile.treeIndex >= tree.nodes.length) {
       return null;
     }
@@ -24,7 +23,7 @@ export class ProgressionEngine {
   }
 
   static getNextNode(profile: Profile): TechTreeNode | null {
-    const tree = this.getTechTree(profile.id);
+    const tree = this.getTechTree(profile);
     if (profile.treeIndex + 1 >= tree.nodes.length) {
       return null;
     }
@@ -32,7 +31,7 @@ export class ProgressionEngine {
   }
 
   static getAllNodes(profile: Profile): TechTreeNode[] {
-    const tree = this.getTechTree(profile.id);
+    const tree = this.getTechTree(profile);
     return tree.nodes;
   }
 
@@ -54,27 +53,26 @@ export class ProgressionEngine {
 
   static getUnlockedTracks(profile: Profile): TrackConfig[] {
     const tracks: TrackConfig[] = [rubyFlats];
-    
+
     if (profile.treeIndex >= 5) {
       tracks.push(sapphireCaverns);
     }
-    
+
     return tracks;
   }
 
   static getCurrentTrack(profile: Profile): TrackConfig {
     const tracks = this.getUnlockedTracks(profile);
-    // Return the highest unlocked track
     return tracks[tracks.length - 1];
   }
 
   static calculateProgress(profile: Profile): number {
-    const tree = this.getTechTree(profile.id);
+    const tree = this.getTechTree(profile);
     return (profile.treeIndex / tree.nodes.length) * 100;
   }
 
   static getTotalShardsSpent(profile: Profile): number {
-    const tree = this.getTechTree(profile.id);
+    const tree = this.getTechTree(profile);
     let total = 0;
     for (let i = 0; i < profile.treeIndex && i < tree.nodes.length; i++) {
       total += tree.nodes[i].cost;
@@ -83,10 +81,10 @@ export class ProgressionEngine {
   }
 
   static getShardsToNextMilestone(profile: Profile): { current: number; needed: number; nextNode: TechTreeNode | null } {
-    const tree = this.getTechTree(profile.id);
+    const tree = this.getTechTree(profile);
     let shardsNeeded = 0;
     let nextMilestone: TechTreeNode | null = null;
-    
+
     for (let i = profile.treeIndex; i < tree.nodes.length; i++) {
       shardsNeeded += tree.nodes[i].cost;
       if (tree.nodes[i].type === 'milestone' || i === profile.treeIndex) {
@@ -94,7 +92,7 @@ export class ProgressionEngine {
         break;
       }
     }
-    
+
     return {
       current: profile.shards,
       needed: shardsNeeded,
