@@ -1,0 +1,125 @@
+{
+  "difficultyId": "emerson-baseline",
+  "targetAge": 7,
+  "gateType": "green",
+  "solveTime": 8,
+  "reward": 10,
+  "templates": [
+    {
+      "id": "counting-merge",
+      "visual": "crystal-merge",
+      "interaction": "drag",
+      "problemText": null,
+      "setup": {
+        "pileA": {"count": 3, "color": "blue", "shape": "hex"},
+        "pileB": {"count": 4, "color": "red", "shape": "hex"}
+      },
+      "validation": {"target": 7, "tolerance": 0},
+      "hint": "Drag all crystals to the center socket"
+    },
+    {
+      "id": "counting-merge-2",
+      "visual": "crystal-merge",
+      "interaction": "drag",
+      "problemText": null,
+      "setup": {
+        "pileA": {"count": 2, "color": "green", "shape": "hex"},
+        "pileB": {"count": 5, "color": "yellow", "shape": "hex"}
+      },
+      "validation": {"target": 7, "tolerance": 0},
+      "hint": "Drag all crystals to the center socket"
+    },
+    {
+      "id": "counting-merge-3",
+      "visual": "crystal-merge",
+      "interaction": "drag",
+      "problemText": null,
+      "setup": {
+        "pileA": {"count": 4, "color": "purple", "shape": "hex"},
+        "pileB": {"count": 3, "color": "orange", "shape": "hex"}
+      },
+      "validation": {"target": 7, "tolerance": 0},
+      "hint": "Drag all crystals to the center socket"
+    },
+    {
+      "id": "addition-concrete-1",
+      "visual": "number-line",
+      "interaction": "numpad",
+      "problemText": "Start at 3. Jump forward 2. Where do you land?",
+      "validation": {"target": 5, "tolerance": 0},
+      "hint": "Count forward: 3... 4... 5"
+    },
+    {
+      "id": "addition-concrete-2",
+      "visual": "number-line",
+      "interaction": "numpad",
+      "problemText": "Start at 5. Jump forward 3. Where do you land?",
+      "validation": {"target": 8, "tolerance": 0},
+      "hint": "Count forward: 5... 6... 7... 8"
+    },
+    {
+      "id": "addition-concrete-3",
+      "visual": "number-line",
+      "interaction": "numpad",
+      "problemText": "Start at 2. Jump forward 4. Where do you land?",
+      "validation": {"target": 6, "tolerance": 0},
+      "hint": "Count forward: 2... 3... 4... 5... 6"
+    },
+    {
+      "id": "simple-addition-1",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "2 + 3 = ?",
+      "validation": {"target": 5, "tolerance": 0},
+      "hint": "Use your fingers to count"
+    },
+    {
+      "id": "simple-addition-2",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "4 + 2 = ?",
+      "validation": {"target": 6, "tolerance": 0},
+      "hint": "Use your fingers to count"
+    },
+    {
+      "id": "simple-addition-3",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "1 + 5 = ?",
+      "validation": {"target": 6, "tolerance": 0},
+      "hint": "Use your fingers to count"
+    },
+    {
+      "id": "counting-objects-1",
+      "visual": "objects",
+      "interaction": "numpad",
+      "problemText": "How many stars? ★★★★",
+      "validation": {"target": 4, "tolerance": 0},
+      "hint": "Count each star one by one"
+    },
+    {
+      "id": "counting-objects-2",
+      "visual": "objects",
+      "interaction": "numpad",
+      "problemText": "How many hearts? ♥♥♥♥♥",
+      "validation": {"target": 5, "tolerance": 0},
+      "hint": "Count each heart one by one"
+    },
+    {
+      "id": "subtraction-simple-1",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "5 - 2 = ?",
+      "validation": {"target": 3, "tolerance": 0},
+      "hint": "Start with 5, take away 2"
+    },
+    {
+      "id": "subtraction-simple-2",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "7 - 3 = ?",
+      "validation": {"target": 4, "tolerance": 0},
+      "hint": "Start with 7, take away 3"
+    }
+  ]
+}

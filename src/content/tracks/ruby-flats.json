@@ -1,0 +1,14 @@
+{
+  "id": "ruby-flats",
+  "unlockRequirement": 0,
+  "name": "Ruby Flats",
+  "theme": {
+    "bgColor": "#2D1B2E",
+    "crystalColor": "#E0115F",
+    "gridColor": "#4A2A4C",
+    "speed": 1.0,
+    "obstacleDensity": 0.3
+  },
+  "gateFrequency": 3000,
+  "difficultyScaling": 1.0
+}

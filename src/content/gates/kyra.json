@@ -1,0 +1,137 @@
+{
+  "difficultyId": "kyra-baseline",
+  "targetAge": 11,
+  "gateType": "purple",
+  "solveTime": 12,
+  "reward": 30,
+  "templates": [
+    {
+      "id": "multiplication-abstract-1",
+      "visual": "grid-array",
+      "interaction": "numpad",
+      "problemText": "3 rows of 4 crystals. Total?",
+      "validation": {"target": 12, "tolerance": 0},
+      "hint": "3 × 4 = ?"
+    },
+    {
+      "id": "multiplication-abstract-2",
+      "visual": "grid-array",
+      "interaction": "numpad",
+      "problemText": "5 rows of 6 crystals. Total?",
+      "validation": {"target": 30, "tolerance": 0},
+      "hint": "5 × 6 = ?"
+    },
+    {
+      "id": "multiplication-abstract-3",
+      "visual": "grid-array",
+      "interaction": "numpad",
+      "problemText": "4 rows of 7 crystals. Total?",
+      "validation": {"target": 28, "tolerance": 0},
+      "hint": "4 × 7 = ?"
+    },
+    {
+      "id": "multiplication-abstract-4",
+      "visual": "grid-array",
+      "interaction": "numpad",
+      "problemText": "6 rows of 5 crystals. Total?",
+      "validation": {"target": 30, "tolerance": 0},
+      "hint": "6 × 5 = ?"
+    },
+    {
+      "id": "fraction-basics-1",
+      "visual": "pie-bar",
+      "interaction": "numpad",
+      "problemText": "Half of 10",
+      "validation": {"target": 5, "tolerance": 0},
+      "hint": "10 ÷ 2 = ?"
+    },
+    {
+      "id": "fraction-basics-2",
+      "visual": "pie-bar",
+      "interaction": "numpad",
+      "problemText": "Half of 16",
+      "validation": {"target": 8, "tolerance": 0},
+      "hint": "16 ÷ 2 = ?"
+    },
+    {
+      "id": "fraction-basics-3",
+      "visual": "pie-bar",
+      "interaction": "numpad",
+      "problemText": "Quarter of 20",
+      "validation": {"target": 5, "tolerance": 0},
+      "hint": "20 ÷ 4 = ?"
+    },
+    {
+      "id": "fraction-basics-4",
+      "visual": "pie-bar",
+      "interaction": "numpad",
+      "problemText": "Third of 15",
+      "validation": {"target": 5, "tolerance": 0},
+      "hint": "15 ÷ 3 = ?"
+    },
+    {
+      "id": "division-simple-1",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "24 ÷ 6 = ?",
+      "validation": {"target": 4, "tolerance": 0},
+      "hint": "How many 6s make 24?"
+    },
+    {
+      "id": "division-simple-2",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "36 ÷ 4 = ?",
+      "validation": {"target": 9, "tolerance": 0},
+      "hint": "How many 4s make 36?"
+    },
+    {
+      "id": "division-simple-3",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "45 ÷ 5 = ?",
+      "validation": {"target": 9, "tolerance": 0},
+      "hint": "How many 5s make 45?"
+    },
+    {
+      "id": "multiplication-table-1",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "7 × 8 = ?",
+      "validation": {"target": 56, "tolerance": 0},
+      "hint": "Think: 7 × 7 = 49, then add 7 more"
+    },
+    {
+      "id": "multiplication-table-2",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "9 × 7 = ?",
+      "validation": {"target": 63, "tolerance": 0},
+      "hint": "Think: 10 × 7 = 70, minus 7"
+    },
+    {
+      "id": "multiplication-table-3",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "8 × 6 = ?",
+      "validation": {"target": 48, "tolerance": 0},
+      "hint": "Think: 8 × 5 = 40, then add 8"
+    },
+    {
+      "id": "addition-hard-1",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "47 + 28 = ?",
+      "validation": {"target": 75, "tolerance": 0},
+      "hint": "47 + 20 = 67, then + 8 more"
+    },
+    {
+      "id": "addition-hard-2",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "56 + 37 = ?",
+      "validation": {"target": 93, "tolerance": 0},
+      "hint": "56 + 30 = 86, then + 7 more"
+    }
+  ]
+}

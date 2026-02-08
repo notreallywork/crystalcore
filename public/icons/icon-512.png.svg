@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0F0F1E"/>
+      <stop offset="100%" style="stop-color:#1A1A3E"/>
+    </linearGradient>
+    <linearGradient id="ship512" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#00D9FF"/>
+      <stop offset="100%" style="stop-color:#0066CC"/>
+    </linearGradient>
+    <linearGradient id="crystal512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700"/>
+      <stop offset="100%" style="stop-color:#FFA500"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg512)" rx="64"/>
+  <!-- Ship -->
+  <path d="M256 100 L320 320 L256 266 L192 320 Z" fill="url(#ship512)" stroke="#FFF" stroke-width="4"/>
+  <circle cx="256" cy="346" r="32" fill="#00D9FF" opacity="0.8"/>
+  <!-- Crystal -->
+  <path d="M400 130 L453 213 L400 293 L347 213 Z" fill="url(#crystal512)" stroke="#FFA500" stroke-width="4"/>
+  <!-- Grid lines -->
+  <line x1="50" y1="400" x2="462" y2="400" stroke="#2D2D5A" stroke-width="4"/>
+  <line x1="171" y1="400" x2="171" y2="462" stroke="#2D2D5A" stroke-width="4"/>
+  <line x1="341" y1="400" x2="341" y2="462" stroke="#2D2D5A" stroke-width="4"/>
+</svg>

@@ -1,0 +1,194 @@
+{
+  "profile": "kyra",
+  "nodes": [
+    {
+      "id": "speed-1",
+      "cost": 40,
+      "type": "stat",
+      "stat": "speed",
+      "value": 1.1,
+      "visual": "add-wings-blue",
+      "name": "Speed Boost I",
+      "description": "Your ship moves 10% faster!"
+    },
+    {
+      "id": "color-ruby",
+      "cost": 35,
+      "type": "cosmetic",
+      "effect": "#E0115F",
+      "visual": "paint-ship",
+      "name": "Ruby Paint",
+      "description": "Paint your ship ruby red!"
+    },
+    {
+      "id": "shield-1",
+      "cost": 60,
+      "type": "stat",
+      "stat": "shield",
+      "value": 4,
+      "visual": "add-shield",
+      "name": "Extra Shield",
+      "description": "You can take 4 hits instead of 3!"
+    },
+    {
+      "id": "trail-electric",
+      "cost": 55,
+      "type": "cosmetic",
+      "effect": "electric",
+      "visual": "add-trail",
+      "name": "Electric Trail",
+      "description": "Leave an electric trail behind you!"
+    },
+    {
+      "id": "speed-2",
+      "cost": 85,
+      "type": "stat",
+      "stat": "speed",
+      "value": 1.2,
+      "visual": "add-wings-gold",
+      "name": "Speed Boost II",
+      "description": "Your ship moves 20% faster!"
+    },
+    {
+      "id": "milestone-sapphire",
+      "cost": 100,
+      "type": "milestone",
+      "effect": "sapphire-caverns",
+      "visual": "unlock-track",
+      "name": "Sapphire Caverns",
+      "description": "Unlock a new track to race on!"
+    },
+    {
+      "id": "color-sapphire",
+      "cost": 50,
+      "type": "cosmetic",
+      "effect": "#0066CC",
+      "visual": "paint-ship",
+      "name": "Sapphire Paint",
+      "description": "Paint your ship sapphire blue!"
+    },
+    {
+      "id": "boost-1",
+      "cost": 75,
+      "type": "stat",
+      "stat": "boostDuration",
+      "value": 4,
+      "visual": "add-boost",
+      "name": "Longer Boost",
+      "description": "Your speed boost lasts 4 seconds!"
+    },
+    {
+      "id": "ship-shape-2",
+      "cost": 60,
+      "type": "cosmetic",
+      "effect": "stealth",
+      "visual": "change-shape",
+      "name": "Stealth Ship",
+      "description": "Change to a stealthy arrow shape!"
+    },
+    {
+      "id": "speed-3",
+      "cost": 125,
+      "type": "stat",
+      "stat": "speed",
+      "value": 1.3,
+      "visual": "add-wings-rainbow",
+      "name": "Speed Boost III",
+      "description": "Your ship moves 30% faster!"
+    },
+    {
+      "id": "color-amethyst",
+      "cost": 70,
+      "type": "cosmetic",
+      "effect": "#9966CC",
+      "visual": "paint-ship",
+      "name": "Amethyst Paint",
+      "description": "Paint your ship amethyst purple!"
+    },
+    {
+      "id": "shield-2",
+      "cost": 110,
+      "type": "stat",
+      "stat": "shield",
+      "value": 5,
+      "visual": "add-shield-gold",
+      "name": "Super Shield",
+      "description": "You can take 5 hits instead of 4!"
+    },
+    {
+      "id": "trail-void",
+      "cost": 95,
+      "type": "cosmetic",
+      "effect": "void",
+      "visual": "add-trail",
+      "name": "Void Trail",
+      "description": "Leave a mysterious void trail!"
+    },
+    {
+      "id": "boost-2",
+      "cost": 115,
+      "type": "stat",
+      "stat": "boostDuration",
+      "value": 5,
+      "visual": "add-boost-gold",
+      "name": "Super Boost",
+      "description": "Your speed boost lasts 5 seconds!"
+    },
+    {
+      "id": "ship-shape-3",
+      "cost": 80,
+      "type": "cosmetic",
+      "effect": "phantom",
+      "visual": "change-shape",
+      "name": "Phantom Ship",
+      "description": "Change to a phantom shape!"
+    },
+    {
+      "id": "color-emerald",
+      "cost": 90,
+      "type": "cosmetic",
+      "effect": "#50C878",
+      "visual": "paint-ship",
+      "name": "Emerald Paint",
+      "description": "Paint your ship emerald green!"
+    },
+    {
+      "id": "speed-4",
+      "cost": 160,
+      "type": "stat",
+      "stat": "speed",
+      "value": 1.4,
+      "visual": "add-wings-crystal",
+      "name": "Crystal Speed",
+      "description": "Your ship moves 40% faster!"
+    },
+    {
+      "id": "trail-nebula",
+      "cost": 130,
+      "type": "cosmetic",
+      "effect": "nebula",
+      "visual": "add-trail",
+      "name": "Nebula Trail",
+      "description": "Leave a nebula trail behind you!"
+    },
+    {
+      "id": "shield-3",
+      "cost": 150,
+      "type": "stat",
+      "stat": "shield",
+      "value": 6,
+      "visual": "add-shield-crystal",
+      "name": "Crystal Shield",
+      "description": "You can take 6 hits!"
+    },
+    {
+      "id": "ship-shape-4",
+      "cost": 220,
+      "type": "cosmetic",
+      "effect": "legend",
+      "visual": "change-shape",
+      "name": "Legend Ship",
+      "description": "The ultimate legendary ship shape!"
+    }
+  ]
+}

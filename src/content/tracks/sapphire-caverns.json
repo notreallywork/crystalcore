@@ -1,0 +1,14 @@
+{
+  "id": "sapphire-caverns",
+  "unlockRequirement": 5,
+  "name": "Sapphire Caverns",
+  "theme": {
+    "bgColor": "#0A1628",
+    "crystalColor": "#0066CC",
+    "gridColor": "#1A3A5C",
+    "speed": 1.1,
+    "obstacleDensity": 0.35
+  },
+  "gateFrequency": 2800,
+  "difficultyScaling": 1.1
+}
