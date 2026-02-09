@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Profile, Gate, MathProblem } from '@/types';
+import type { Profile, Gate, MathProblem, PowerupType } from '@/types';
 import { RaceEngine } from '@/engines/RaceEngine';
 import { useGameStore } from '@/stores/gameStore';
 import { HUD } from './HUD';
@@ -23,6 +23,8 @@ export function GameCanvas({ profile, onEndRace, onPause, isPaused }: GameCanvas
   const [respawnFlash, setRespawnFlash] = useState(false);
   const [showTutorial, setShowTutorial] = useState(true);
   const [bossActive, setBossActive] = useState(false);
+  const [stageClear, setStageClear] = useState(false);
+  const [powerupMessage, setPowerupMessage] = useState<string | null>(null);
   const resultsRef = useRef<{
     distance: number;
     shards: number;
@@ -61,6 +63,18 @@ export function GameCanvas({ profile, onEndRace, onPause, isPaused }: GameCanvas
     const timer = setTimeout(() => setShowTutorial(false), 4000);
     return () => clearTimeout(timer);
   }, []);
+
+  // Spacebar pause handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !activeGate && !bossMathProblem && !showResults) {
+        e.preventDefault();
+        onPause();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeGate, bossMathProblem, showResults, onPause]);
 
   // Initialize race engine
   useEffect(() => {
@@ -133,6 +147,54 @@ export function GameCanvas({ profile, onEndRace, onPause, isPaused }: GameCanvas
         },
         onRockDestroyed: () => {
           destroyRock();
+        },
+        onStageClear: () => {
+          setStageClear(true);
+          // Auto-end race with stage clear bonus
+          const run = useGameStore.getState().currentRun;
+          if (run) {
+            collectShards(50); // Stage completion bonus
+            resultsRef.current = {
+              distance: run.distance,
+              shards: run.shardsCollected + 50,
+              correct: run.correctAnswers,
+              attempted: run.gatesAttempted,
+              rocksDestroyed: run.rocksDestroyed,
+              bossesDefeated: run.bossesDefeated,
+            };
+
+            if (run.gatesAttempted > 0) {
+              adjustDifficulty({
+                gatesAttempted: run.gatesAttempted,
+                correctAnswers: run.correctAnswers,
+                avgTime: 0,
+              });
+            }
+          }
+          engineRef.current?.stop();
+          endRace();
+          setShowResults(true);
+        },
+        onPowerupCollect: (type: PowerupType) => {
+          if (type === 'boost') {
+            activateBoost();
+            setPowerupMessage('SPEED BOOST!');
+          } else if (type === 'rapidfire') {
+            setPowerupMessage('RAPID FIRE!');
+          } else if (type === 'shield') {
+            // Restore a shield hit
+            const store = useGameStore.getState();
+            if (store.currentRun && store.currentRun.shieldHits > 0) {
+              useGameStore.setState({
+                currentRun: {
+                  ...store.currentRun,
+                  shieldHits: store.currentRun.shieldHits - 1,
+                },
+              });
+            }
+            setPowerupMessage('SHIELD RESTORED!');
+          }
+          setTimeout(() => setPowerupMessage(null), 1500);
         },
       },
     );
@@ -250,8 +312,17 @@ export function GameCanvas({ profile, onEndRace, onPause, isPaused }: GameCanvas
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-2">Race Complete!</h2>
-            <p className="text-white/50 mb-8">Great flying, {profile.name}!</p>
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-2">
+              {stageClear ? 'Stage Complete!' : 'Race Complete!'}
+            </h2>
+            <p className="text-white/50 mb-8">
+              {stageClear ? 'Amazing run, ' : 'Great flying, '}{profile.name}!
+            </p>
+            {stageClear && (
+              <div className="mb-4 inline-block px-4 py-1.5 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-500/20 rounded-full">
+                <span className="text-cyan-300 text-sm font-bold">+50 Stage Bonus Shards!</span>
+              </div>
+            )}
           </motion.div>
 
           <div className="grid grid-cols-2 gap-3 mb-6">
@@ -364,6 +435,22 @@ export function GameCanvas({ profile, onEndRace, onPause, isPaused }: GameCanvas
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Powerup message */}
+      <AnimatePresence>
+        {powerupMessage && (
+          <motion.div
+            className="absolute top-1/3 left-1/2 -translate-x-1/2 pointer-events-none z-30"
+            initial={{ opacity: 0, scale: 0.5, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, y: -30 }}
+          >
+            <div className="px-6 py-3 bg-black/60 backdrop-blur-sm rounded-2xl border border-white/20">
+              <span className="text-xl font-bold text-white drop-shadow-lg">{powerupMessage}</span>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
 

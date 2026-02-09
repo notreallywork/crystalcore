@@ -4,14 +4,18 @@ import { useGameStore } from '@/stores/gameStore';
 import { ProfileCard } from '@/components/ui/ProfileCard';
 import { GameCanvas } from '@/components/race/GameCanvas';
 import { TechTree } from '@/components/garage/TechTree';
+import { UpgradeShop } from '@/components/garage/UpgradeShop';
+import { MathQuiz } from '@/components/garage/MathQuiz';
 import type { ProfileId, CompetencyLevel } from '@/types';
 
 type Screen = 'select' | 'create' | 'race' | 'garage' | 'settings';
+type GarageTab = 'tree' | 'upgrades' | 'quiz';
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('select');
   const [isPaused, setIsPaused] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<ProfileId | null>(null);
+  const [garageTab, setGarageTab] = useState<GarageTab>('tree');
 
   // Create profile form state
   const [newName, setNewName] = useState('');
@@ -322,7 +326,7 @@ function App() {
         <GameCanvas
           profile={activeProfile}
           onEndRace={handleEndRace}
-          onPause={() => setIsPaused(true)}
+          onPause={() => setIsPaused((prev) => !prev)}
           isPaused={isPaused}
         />
 
@@ -401,7 +405,7 @@ function App() {
 
         {/* Profile Tabs */}
         {profiles.length > 1 && (
-          <div className="flex gap-2 px-4 mb-4 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-2 px-4 mb-2 overflow-x-auto scrollbar-hide">
             {profiles.map((p) => (
               <button
                 key={p.id}
@@ -418,9 +422,32 @@ function App() {
           </div>
         )}
 
-        {/* Tech Tree */}
-        <main className="h-[calc(100vh-120px)]">
-          <TechTree profile={garageProfile} />
+        {/* Garage Tabs */}
+        <div className="flex gap-1 px-4 mb-2">
+          {([
+            { key: 'tree' as GarageTab, label: 'Tech Tree' },
+            { key: 'upgrades' as GarageTab, label: 'Upgrades' },
+            { key: 'quiz' as GarageTab, label: 'Math Quiz' },
+          ]).map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setGarageTab(tab.key)}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all border ${
+                garageTab === tab.key
+                  ? 'bg-white/8 border-white/15 text-white'
+                  : 'bg-white/2 border-white/5 text-white/35 hover:bg-white/5 hover:text-white/50'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab Content */}
+        <main className="h-[calc(100vh-160px)]">
+          {garageTab === 'tree' && <TechTree profile={garageProfile} />}
+          {garageTab === 'upgrades' && <UpgradeShop profile={garageProfile} />}
+          {garageTab === 'quiz' && <MathQuiz profile={garageProfile} />}
         </main>
       </div>
     );

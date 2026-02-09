@@ -5,6 +5,7 @@ export type SteeringMode = 'auto' | 'manual';
 export type GateType = 'green' | 'purple' | 'skip';
 export type NodeType = 'stat' | 'cosmetic' | 'milestone';
 export type InteractionType = 'drag' | 'numpad';
+export type PowerupType = 'boost' | 'rapidfire' | 'shield';
 export type CompetencyLevel = 'beginner' | 'intermediate' | 'advanced';
 
 export interface Profile {
@@ -20,6 +21,7 @@ export interface Profile {
     speed: number;
     shield: number;
     boostDuration: number;
+    weaponLevel: number;
   };
   cosmetics: {
     color: string;
@@ -175,6 +177,16 @@ export interface Particle {
   maxLife: number;
   color: string;
   size: number;
+}
+
+export interface Powerup {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  type: PowerupType;
+  rotation: number;
 }
 
 export interface ShipState {

@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { Profile, ProfileId, RaceSession, TechTreeNode, CompetencyLevel } from '@/types';
 import { ProgressionEngine } from '@/engines/ProgressionEngine';
 
-const CURRENT_VERSION = 2;
+const CURRENT_VERSION = 3;
 
 const SHIP_COLORS = [
   '#00D9FF', '#9D00FF', '#00FF88', '#FF3366', '#FFD700',
@@ -32,6 +32,7 @@ export function createProfile(
       speed: 1.0,
       shield: 3,
       boostDuration: 3,
+      weaponLevel: 1,
     },
     cosmetics: {
       color: SHIP_COLORS[colorIndex],
@@ -429,7 +430,7 @@ export const useGameStore = create<GameStore>()(
               treeIndex: (oldEmerson.treeIndex as number) || 0,
               unlockedNodes: (oldEmerson.unlockedNodes as string[]) || [],
               difficulty: (oldEmerson.difficulty as number) || 1,
-              stats: (oldEmerson.stats as Profile['stats']) || { speed: 1.0, shield: 3, boostDuration: 3 },
+              stats: { speed: 1.0, shield: 3, boostDuration: 3, weaponLevel: 1, ...((oldEmerson.stats as Partial<Profile['stats']>) || {}) },
               cosmetics: (oldEmerson.cosmetics as Profile['cosmetics']) || { color: '#00D9FF', trail: 'none', shipShape: 'default' },
               preferences: (oldEmerson.preferences as Profile['preferences']) || { steering: 'auto' },
               lastPlayed: (oldEmerson.lastPlayed as string) || null,
@@ -449,7 +450,7 @@ export const useGameStore = create<GameStore>()(
               treeIndex: (oldKyra.treeIndex as number) || 0,
               unlockedNodes: (oldKyra.unlockedNodes as string[]) || [],
               difficulty: (oldKyra.difficulty as number) || 1,
-              stats: (oldKyra.stats as Profile['stats']) || { speed: 1.0, shield: 3, boostDuration: 3 },
+              stats: { speed: 1.0, shield: 3, boostDuration: 3, weaponLevel: 1, ...((oldKyra.stats as Partial<Profile['stats']>) || {}) },
               cosmetics: (oldKyra.cosmetics as Profile['cosmetics']) || { color: '#9D00FF', trail: 'none', shipShape: 'default' },
               preferences: (oldKyra.preferences as Profile['preferences']) || { steering: 'manual' },
               lastPlayed: (oldKyra.lastPlayed as string) || null,
@@ -464,6 +465,21 @@ export const useGameStore = create<GameStore>()(
             activeProfileId: state.activeProfile || null,
             version: CURRENT_VERSION,
             currentRun: null,
+          };
+        }
+        // v2 -> v3: add weaponLevel to existing profiles
+        if (version < 3) {
+          const profiles = (state.profiles as Profile[]) || [];
+          return {
+            ...state,
+            profiles: profiles.map((p) => ({
+              ...p,
+              stats: {
+                ...p.stats,
+                weaponLevel: p.stats.weaponLevel || 1,
+              },
+            })),
+            version: CURRENT_VERSION,
           };
         }
         return state;
