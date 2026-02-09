@@ -6,6 +6,123 @@
   "reward": 30,
   "templates": [
     {
+      "id": "var-multiply",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} × {B} = ?",
+      "variables": {"A": [2, 3, 4, 5, 6, 7, 8, 9], "B": [2, 3, 4, 5, 6]},
+      "validation": "A*B",
+      "hint": "Multiply the two numbers"
+    },
+    {
+      "id": "var-multiply-hard",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} × {B} = ?",
+      "variables": {"A": [6, 7, 8, 9], "B": [6, 7, 8, 9]},
+      "validation": "A*B",
+      "hint": "Use your multiplication table tricks"
+    },
+    {
+      "id": "var-divide-clean",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} ÷ {B} = ?",
+      "variables": {"A": [12, 18, 24, 30, 36], "B": [2, 3, 6]},
+      "validation": "A/B",
+      "hint": "How many groups of the second number make the first?"
+    },
+    {
+      "id": "var-divide-fives",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} ÷ 5 = ?",
+      "variables": {"A": [10, 15, 20, 25, 30, 35, 40, 45]},
+      "validation": "A/5",
+      "hint": "How many 5s make this number?"
+    },
+    {
+      "id": "var-add-hard",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} + {B} = ?",
+      "variables": {"A": [23, 34, 45, 56, 67], "B": [18, 27, 36, 29, 14]},
+      "validation": "A+B",
+      "hint": "Add the tens first, then the ones"
+    },
+    {
+      "id": "var-sub-hard",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} - {B} = ?",
+      "variables": {"A": [50, 60, 70, 80, 90], "B": [12, 15, 23, 27, 34]},
+      "validation": "A-B",
+      "hint": "Subtract tens first, then ones"
+    },
+    {
+      "id": "var-half",
+      "visual": "pie-bar",
+      "interaction": "numpad",
+      "problemText": "Half of {A}",
+      "variables": {"A": [8, 12, 16, 20, 24, 30, 40, 50]},
+      "validation": "A/2",
+      "hint": "Divide by 2"
+    },
+    {
+      "id": "var-quarter",
+      "visual": "pie-bar",
+      "interaction": "numpad",
+      "problemText": "Quarter of {A}",
+      "variables": {"A": [8, 12, 16, 20, 24, 28, 32, 40]},
+      "validation": "A/4",
+      "hint": "Divide by 4 (half of half)"
+    },
+    {
+      "id": "var-third",
+      "visual": "pie-bar",
+      "interaction": "numpad",
+      "problemText": "Third of {A}",
+      "variables": {"A": [9, 12, 15, 18, 21, 24, 27, 30]},
+      "validation": "A/3",
+      "hint": "Divide by 3"
+    },
+    {
+      "id": "var-grid-array",
+      "visual": "grid-array",
+      "interaction": "numpad",
+      "problemText": "{A} rows of {B} crystals. Total?",
+      "variables": {"A": [2, 3, 4, 5, 6], "B": [3, 4, 5, 6, 7]},
+      "validation": "A*B",
+      "hint": "Rows × Columns"
+    },
+    {
+      "id": "var-squared",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} × {A} = ?",
+      "variables": {"A": [2, 3, 4, 5, 6, 7, 8, 9]},
+      "validation": "A*A",
+      "hint": "Multiply the number by itself"
+    },
+    {
+      "id": "var-missing-mult",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} × ? = {B}",
+      "variables": {"A": [2, 3, 4, 5], "B": [10, 12, 15, 16, 20, 24, 25]},
+      "validation": "B/A",
+      "hint": "What times the first number gives you the answer?"
+    },
+    {
+      "id": "var-remainder",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} ÷ {B} = ? (whole number only)",
+      "variables": {"A": [10, 14, 20, 21, 25, 28], "B": [2, 3, 4, 5, 7]},
+      "validation": "Math.floor(A/B)",
+      "hint": "Divide and ignore the remainder"
+    },
+    {
       "id": "multiplication-abstract-1",
       "visual": "grid-array",
       "interaction": "numpad",
@@ -20,54 +137,6 @@
       "problemText": "5 rows of 6 crystals. Total?",
       "validation": {"target": 30, "tolerance": 0},
       "hint": "5 × 6 = ?"
-    },
-    {
-      "id": "multiplication-abstract-3",
-      "visual": "grid-array",
-      "interaction": "numpad",
-      "problemText": "4 rows of 7 crystals. Total?",
-      "validation": {"target": 28, "tolerance": 0},
-      "hint": "4 × 7 = ?"
-    },
-    {
-      "id": "multiplication-abstract-4",
-      "visual": "grid-array",
-      "interaction": "numpad",
-      "problemText": "6 rows of 5 crystals. Total?",
-      "validation": {"target": 30, "tolerance": 0},
-      "hint": "6 × 5 = ?"
-    },
-    {
-      "id": "fraction-basics-1",
-      "visual": "pie-bar",
-      "interaction": "numpad",
-      "problemText": "Half of 10",
-      "validation": {"target": 5, "tolerance": 0},
-      "hint": "10 ÷ 2 = ?"
-    },
-    {
-      "id": "fraction-basics-2",
-      "visual": "pie-bar",
-      "interaction": "numpad",
-      "problemText": "Half of 16",
-      "validation": {"target": 8, "tolerance": 0},
-      "hint": "16 ÷ 2 = ?"
-    },
-    {
-      "id": "fraction-basics-3",
-      "visual": "pie-bar",
-      "interaction": "numpad",
-      "problemText": "Quarter of 20",
-      "validation": {"target": 5, "tolerance": 0},
-      "hint": "20 ÷ 4 = ?"
-    },
-    {
-      "id": "fraction-basics-4",
-      "visual": "pie-bar",
-      "interaction": "numpad",
-      "problemText": "Third of 15",
-      "validation": {"target": 5, "tolerance": 0},
-      "hint": "15 ÷ 3 = ?"
     },
     {
       "id": "division-simple-1",
@@ -86,14 +155,6 @@
       "hint": "How many 4s make 36?"
     },
     {
-      "id": "division-simple-3",
-      "visual": "equation",
-      "interaction": "numpad",
-      "problemText": "45 ÷ 5 = ?",
-      "validation": {"target": 9, "tolerance": 0},
-      "hint": "How many 5s make 45?"
-    },
-    {
       "id": "multiplication-table-1",
       "visual": "equation",
       "interaction": "numpad",
@@ -110,14 +171,6 @@
       "hint": "Think: 10 × 7 = 70, minus 7"
     },
     {
-      "id": "multiplication-table-3",
-      "visual": "equation",
-      "interaction": "numpad",
-      "problemText": "8 × 6 = ?",
-      "validation": {"target": 48, "tolerance": 0},
-      "hint": "Think: 8 × 5 = 40, then add 8"
-    },
-    {
       "id": "addition-hard-1",
       "visual": "equation",
       "interaction": "numpad",
@@ -126,12 +179,22 @@
       "hint": "47 + 20 = 67, then + 8 more"
     },
     {
-      "id": "addition-hard-2",
+      "id": "var-double-then-add",
       "visual": "equation",
       "interaction": "numpad",
-      "problemText": "56 + 37 = ?",
-      "validation": {"target": 93, "tolerance": 0},
-      "hint": "56 + 30 = 86, then + 7 more"
+      "problemText": "{A} × 2 + {B} = ?",
+      "variables": {"A": [5, 6, 7, 8, 10], "B": [1, 2, 3, 5]},
+      "validation": "A*2+B",
+      "hint": "Double the first number, then add"
+    },
+    {
+      "id": "var-subtract-tens",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "100 - {A} = ?",
+      "variables": {"A": [10, 15, 20, 25, 30, 35, 40, 45, 50]},
+      "validation": "100-A",
+      "hint": "Subtract from 100"
     }
   ]
 }

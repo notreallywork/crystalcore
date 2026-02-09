@@ -45,10 +45,12 @@ export class MathValidator {
     // Calculate the answer based on validation expression
     let target = 0;
     if (typeof template.validation === 'string') {
-      // Simple expression evaluation
-      const expr = template.validation
-        .replace(/A/g, values['A']?.toString() || '0')
-        .replace(/B/g, values['B']?.toString() || '0');
+      // Simple expression evaluation - replace variables with values
+      let expr = template.validation as string;
+      // Replace variable names (whole word) with their values
+      for (const [key, val] of Object.entries(values)) {
+        expr = expr.replace(new RegExp(`\\b${key}\\b`, 'g'), val.toString());
+      }
       
       try {
         // Safe evaluation for simple math

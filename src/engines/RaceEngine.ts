@@ -8,6 +8,8 @@ import type {
   Profile,
   TrackConfig,
   MathProblem,
+  Powerup,
+  PowerupType,
 } from '@/types';
 import { MathValidator } from './MathValidator';
 import emersonGates from '@/content/gates/emerson.json';
@@ -39,9 +41,12 @@ const BOSS_MAX_HEALTH = 15;
 const BOSS_MATH_THRESHOLD = 0.5;
 const BOSS_REWARD = 75;
 const BOOST_SPEED_MULTIPLIER = 1.5;
-const SHIP_MOVE_SPEED = 500;
-const SHIP_LERP_TOUCH = 0.14;
+const SHIP_MOVE_SPEED = 1000;
+const SHIP_LERP_TOUCH = 0.21;
 const GATE_HEIGHT = 60;
+const STAGE_DISTANCE = 25000;
+const POWERUP_DROP_CHANCE = 0.2;
+const POWERUP_SIZE = 28;
 
 interface RaceEngineCallbacks {
   onShardCollect: (amount: number) => void;
@@ -56,6 +61,8 @@ interface RaceEngineCallbacks {
   onBossMathPhase: (problem: MathProblem) => void;
   onBossDefeated: (reward: number) => void;
   onRockDestroyed: () => void;
+  onStageClear: () => void;
+  onPowerupCollect: (type: PowerupType) => void;
 }
 
 // Nebula cloud for background
@@ -91,6 +98,7 @@ export class RaceEngine {
   private gates: Gate[] = [];
   private boss: Boss | null = null;
   private particles: Particle[] = [];
+  private powerups: Powerup[] = [];
 
   // Timers
   private shootTimer = 0;
@@ -110,6 +118,8 @@ export class RaceEngine {
   private isInvincible = false;
   private screenShake = { x: 0, y: 0, time: 0 };
   private bossWarningTimer = 0;
+  private rapidFireTimer = 0;
+  private stageClearTriggered = false;
 
   // Background
   private starLayers: Star[][] = [];
@@ -381,11 +391,17 @@ export class RaceEngine {
       }
     }
 
+    // Rapid fire timer
+    if (this.rapidFireTimer > 0) {
+      this.rapidFireTimer -= dt;
+    }
+
     this.updateShip(dt);
     this.updateProjectiles(dt, scrollSpeed);
     this.updateObstacles(dt, scrollSpeed);
     this.updateGates(dt, scrollSpeed);
     this.updateBoss(dt);
+    this.updatePowerups(dt, scrollSpeed);
     this.updateParticles(dt);
     this.updateBackground(dt, scrollSpeed);
 
@@ -402,9 +418,10 @@ export class RaceEngine {
       this.gateTimer = 0;
     }
 
-    // Auto-fire
+    // Auto-fire (weapon level + rapid fire powerup)
     this.shootTimer += dt;
-    if (this.shootTimer >= SHOOT_INTERVAL) {
+    const shootInterval = this.getShootInterval();
+    if (this.shootTimer >= shootInterval) {
       this.fireProjectile();
       this.shootTimer = 0;
     }
@@ -418,6 +435,12 @@ export class RaceEngine {
     if (this.distance - this.lastCheckpoint >= CHECKPOINT_DISTANCE) {
       this.lastCheckpoint = this.distance;
       this.callbacks.onCheckpoint();
+    }
+
+    // Stage distance limit
+    if (!this.stageClearTriggered && this.distance >= STAGE_DISTANCE) {
+      this.stageClearTriggered = true;
+      this.callbacks.onStageClear();
     }
 
     this.gridOffset = (this.gridOffset + scrollSpeed * dt) % 80;
@@ -483,6 +506,10 @@ export class RaceEngine {
           ) {
             // Destroy rock
             this.spawnExplosionParticles(obs.x, obs.y);
+            // Chance to drop powerup
+            if (Math.random() < POWERUP_DROP_CHANCE) {
+              this.spawnPowerup(obs.x, obs.y);
+            }
             this.obstacles.splice(i, 1);
             this.callbacks.onRockDestroyed();
             this.callbacks.onShardCollect(1);
@@ -632,6 +659,80 @@ export class RaceEngine {
     });
   }
 
+  private getShootInterval(): number {
+    if (this.rapidFireTimer > 0) return 0.08;
+    const wl = this.profile.stats.weaponLevel || 1;
+    return Math.max(0.10, SHOOT_INTERVAL - (wl - 1) * 0.04);
+  }
+
+  private getProjectileDamage(): number {
+    const wl = this.profile.stats.weaponLevel || 1;
+    if (wl >= 5) return 3;
+    if (wl >= 3) return 2;
+    return 1;
+  }
+
+  private updatePowerups(dt: number, scrollSpeed: number) {
+    this.powerups = this.powerups.filter((p) => {
+      p.y += scrollSpeed * dt;
+      p.rotation += 2.5 * dt;
+
+      // Off-screen
+      if (p.y > CANVAS_HEIGHT + 40) return false;
+
+      // Collision with ship
+      const dist = Math.sqrt(
+        (this.ship.x - p.x) ** 2 + (this.ship.y - p.y) ** 2,
+      );
+      if (dist < (this.ship.width + p.width) / 2) {
+        this.callbacks.onPowerupCollect(p.type);
+        this.spawnPowerupCollectParticles(p.x, p.y, p.type);
+
+        if (p.type === 'rapidfire') {
+          this.rapidFireTimer = 5.0;
+        }
+
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  private spawnPowerup(x: number, y: number) {
+    const types: PowerupType[] = ['boost', 'rapidfire', 'shield'];
+    const type = types[Math.floor(Math.random() * types.length)];
+
+    this.powerups.push({
+      id: `pwrup-${Date.now()}-${Math.random()}`,
+      x,
+      y,
+      width: POWERUP_SIZE,
+      height: POWERUP_SIZE,
+      type,
+      rotation: 0,
+    });
+  }
+
+  private spawnPowerupCollectParticles(x: number, y: number, type: PowerupType) {
+    const color = type === 'boost' ? '#00FFFF' : type === 'rapidfire' ? '#FF6600' : '#00FF88';
+    for (let i = 0; i < 12; i++) {
+      const angle = (Math.PI * 2 * i) / 12;
+      const speed = 80 + Math.random() * 100;
+      this.particles.push({
+        id: `pwrup-p-${Date.now()}-${i}`,
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 0.6,
+        maxLife: 0.6,
+        color,
+        size: 3 + Math.random() * 4,
+      });
+    }
+  }
+
   private updateBackground(dt: number, _scrollSpeed: number) {
     // Stars parallax
     for (const layer of this.starLayers) {
@@ -742,6 +843,9 @@ export class RaceEngine {
   }
 
   private fireProjectile() {
+    const damage = this.getProjectileDamage();
+    const wl = this.profile.stats.weaponLevel || 1;
+
     this.projectiles.push({
       id: `proj-${Date.now()}-${Math.random()}`,
       x: this.ship.x,
@@ -750,9 +854,24 @@ export class RaceEngine {
       vy: -PROJECTILE_SPEED,
       width: PROJECTILE_WIDTH,
       height: PROJECTILE_HEIGHT,
-      damage: 1,
+      damage,
       fromBoss: false,
     });
+
+    // Level 5: dual shot
+    if (wl >= 5) {
+      this.projectiles.push({
+        id: `proj-${Date.now()}-${Math.random()}-r`,
+        x: this.ship.x + 12,
+        y: this.ship.y - SHIP_HEIGHT / 2,
+        vx: 0,
+        vy: -PROJECTILE_SPEED,
+        width: PROJECTILE_WIDTH,
+        height: PROJECTILE_HEIGHT,
+        damage,
+        fromBoss: false,
+      });
+    }
   }
 
   private fireBossProjectile() {
@@ -917,12 +1036,14 @@ export class RaceEngine {
     this.renderBackground(ctx);
     this.renderGates(ctx);
     this.renderObstacles(ctx);
+    this.renderPowerups(ctx);
     this.renderProjectiles(ctx);
     this.renderBoss(ctx);
     this.renderShip(ctx);
     this.renderParticles(ctx);
     this.renderBoostEffect(ctx);
     this.renderBossWarning(ctx);
+    this.renderStageProgress(ctx);
 
     ctx.restore();
   }
@@ -1420,6 +1541,104 @@ export class RaceEngine {
     ctx.shadowColor = '#FF0000';
     ctx.shadowBlur = 20;
     ctx.fillText('⚠ BOSS APPROACHING ⚠', CANVAS_WIDTH / 2, CANVAS_HEIGHT * 0.35);
+    ctx.restore();
+  }
+
+  private renderPowerups(ctx: CanvasRenderingContext2D) {
+    for (const p of this.powerups) {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+
+      const half = p.width / 2;
+      const pulse = 1 + Math.sin(Date.now() * 0.005) * 0.12;
+
+      if (p.type === 'boost') {
+        // Cyan lightning bolt
+        ctx.shadowColor = '#00FFFF';
+        ctx.shadowBlur = 15;
+        ctx.fillStyle = '#00FFFF';
+        ctx.beginPath();
+        ctx.moveTo(-4 * pulse, -half * pulse);
+        ctx.lineTo(4 * pulse, -3 * pulse);
+        ctx.lineTo(-1 * pulse, 2 * pulse);
+        ctx.lineTo(6 * pulse, half * pulse);
+        ctx.lineTo(-4 * pulse, 3 * pulse);
+        ctx.lineTo(1 * pulse, -2 * pulse);
+        ctx.closePath();
+        ctx.fill();
+      } else if (p.type === 'rapidfire') {
+        // Orange double arrow
+        ctx.shadowColor = '#FF6600';
+        ctx.shadowBlur = 15;
+        ctx.fillStyle = '#FF6600';
+        ctx.beginPath();
+        ctx.moveTo(0, -half * pulse);
+        ctx.lineTo(half * 0.7 * pulse, 0);
+        ctx.lineTo(0, half * 0.3 * pulse);
+        ctx.lineTo(-half * 0.7 * pulse, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#FFAA00';
+        ctx.beginPath();
+        ctx.moveTo(0, -half * 0.4 * pulse);
+        ctx.lineTo(half * 0.4 * pulse, half * 0.1 * pulse);
+        ctx.lineTo(0, half * 0.6 * pulse);
+        ctx.lineTo(-half * 0.4 * pulse, half * 0.1 * pulse);
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        // Green shield icon
+        ctx.shadowColor = '#00FF88';
+        ctx.shadowBlur = 15;
+        ctx.strokeStyle = '#00FF88';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, -half * pulse);
+        ctx.quadraticCurveTo(half * pulse, -half * 0.6 * pulse, half * pulse, 0);
+        ctx.quadraticCurveTo(half * 0.8 * pulse, half * 0.7 * pulse, 0, half * pulse);
+        ctx.quadraticCurveTo(-half * 0.8 * pulse, half * 0.7 * pulse, -half * pulse, 0);
+        ctx.quadraticCurveTo(-half * pulse, -half * 0.6 * pulse, 0, -half * pulse);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.fillStyle = '#00FF8830';
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+  }
+
+  private renderStageProgress(ctx: CanvasRenderingContext2D) {
+    // Stage progress bar at bottom
+    const barWidth = Math.min(CANVAS_WIDTH * 0.35, 180);
+    const barHeight = 4;
+    const barX = (CANVAS_WIDTH - barWidth) / 2;
+    const barY = CANVAS_HEIGHT - 42;
+    const progress = Math.min(this.distance / STAGE_DISTANCE, 1);
+
+    ctx.save();
+    ctx.globalAlpha = 0.4;
+    ctx.fillStyle = '#1A1A2E';
+    ctx.beginPath();
+    ctx.roundRect(barX, barY, barWidth, barHeight, 2);
+    ctx.fill();
+
+    ctx.globalAlpha = 0.7;
+    const grad = ctx.createLinearGradient(barX, barY, barX + barWidth * progress, barY);
+    grad.addColorStop(0, '#00D9FF');
+    grad.addColorStop(1, '#9D00FF');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.roundRect(barX, barY, barWidth * progress, barHeight, 2);
+    ctx.fill();
+
+    // Label
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${Math.floor(this.distance / 1000)}/${STAGE_DISTANCE / 1000}km`, CANVAS_WIDTH / 2, barY - 3);
     ctx.restore();
   }
 

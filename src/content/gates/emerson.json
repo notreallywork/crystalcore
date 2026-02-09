@@ -42,6 +42,102 @@
       "hint": "Drag all crystals to the center socket"
     },
     {
+      "id": "counting-merge-4",
+      "visual": "crystal-merge",
+      "interaction": "drag",
+      "problemText": null,
+      "setup": {
+        "pileA": {"count": 1, "color": "cyan", "shape": "hex"},
+        "pileB": {"count": 6, "color": "pink", "shape": "hex"}
+      },
+      "validation": {"target": 7, "tolerance": 0},
+      "hint": "Drag all crystals to the center socket"
+    },
+    {
+      "id": "counting-merge-5",
+      "visual": "crystal-merge",
+      "interaction": "drag",
+      "problemText": null,
+      "setup": {
+        "pileA": {"count": 5, "color": "blue", "shape": "hex"},
+        "pileB": {"count": 4, "color": "green", "shape": "hex"}
+      },
+      "validation": {"target": 9, "tolerance": 0},
+      "hint": "Drag all crystals to the center socket"
+    },
+    {
+      "id": "var-add-small",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} + {B} = ?",
+      "variables": {"A": [1, 2, 3, 4, 5], "B": [1, 2, 3, 4]},
+      "validation": "A+B",
+      "hint": "Use your fingers to count"
+    },
+    {
+      "id": "var-add-medium",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} + {B} = ?",
+      "variables": {"A": [3, 4, 5, 6, 7], "B": [2, 3, 4, 5]},
+      "validation": "A+B",
+      "hint": "Start at the bigger number and count up"
+    },
+    {
+      "id": "var-sub-easy",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} - {B} = ?",
+      "variables": {"A": [5, 6, 7, 8, 9], "B": [1, 2, 3]},
+      "validation": "A-B",
+      "hint": "Start at the bigger number and count back"
+    },
+    {
+      "id": "var-sub-medium",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} - {B} = ?",
+      "variables": {"A": [7, 8, 9, 10], "B": [2, 3, 4, 5]},
+      "validation": "A-B",
+      "hint": "Count backwards from the first number"
+    },
+    {
+      "id": "var-doubles",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} + {A} = ?",
+      "variables": {"A": [1, 2, 3, 4, 5]},
+      "validation": "A+A",
+      "hint": "Double the number!"
+    },
+    {
+      "id": "var-number-line",
+      "visual": "number-line",
+      "interaction": "numpad",
+      "problemText": "Start at {A}. Jump forward {B}. Where?",
+      "variables": {"A": [1, 2, 3, 4, 5], "B": [1, 2, 3, 4]},
+      "validation": "A+B",
+      "hint": "Count forward from where you start"
+    },
+    {
+      "id": "var-number-line-back",
+      "visual": "number-line",
+      "interaction": "numpad",
+      "problemText": "Start at {A}. Jump back {B}. Where?",
+      "variables": {"A": [5, 6, 7, 8, 9], "B": [1, 2, 3]},
+      "validation": "A-B",
+      "hint": "Count backward from where you start"
+    },
+    {
+      "id": "var-missing-add",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} + ? = {B}",
+      "variables": {"A": [1, 2, 3, 4], "B": [5, 6, 7, 8, 9]},
+      "validation": "B-A",
+      "hint": "What do you add to get the answer?"
+    },
+    {
       "id": "addition-concrete-1",
       "visual": "number-line",
       "interaction": "numpad",
@@ -58,14 +154,6 @@
       "hint": "Count forward: 5... 6... 7... 8"
     },
     {
-      "id": "addition-concrete-3",
-      "visual": "number-line",
-      "interaction": "numpad",
-      "problemText": "Start at 2. Jump forward 4. Where do you land?",
-      "validation": {"target": 6, "tolerance": 0},
-      "hint": "Count forward: 2... 3... 4... 5... 6"
-    },
-    {
       "id": "simple-addition-1",
       "visual": "equation",
       "interaction": "numpad",
@@ -78,14 +166,6 @@
       "visual": "equation",
       "interaction": "numpad",
       "problemText": "4 + 2 = ?",
-      "validation": {"target": 6, "tolerance": 0},
-      "hint": "Use your fingers to count"
-    },
-    {
-      "id": "simple-addition-3",
-      "visual": "equation",
-      "interaction": "numpad",
-      "problemText": "1 + 5 = ?",
       "validation": {"target": 6, "tolerance": 0},
       "hint": "Use your fingers to count"
     },
@@ -106,6 +186,14 @@
       "hint": "Count each heart one by one"
     },
     {
+      "id": "counting-objects-3",
+      "visual": "objects",
+      "interaction": "numpad",
+      "problemText": "How many diamonds? ◆◆◆◆◆◆",
+      "validation": {"target": 6, "tolerance": 0},
+      "hint": "Count each diamond one by one"
+    },
+    {
       "id": "subtraction-simple-1",
       "visual": "equation",
       "interaction": "numpad",
@@ -120,6 +208,24 @@
       "problemText": "7 - 3 = ?",
       "validation": {"target": 4, "tolerance": 0},
       "hint": "Start with 7, take away 3"
+    },
+    {
+      "id": "var-ten-add",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "10 + {A} = ?",
+      "variables": {"A": [1, 2, 3, 4, 5, 6, 7, 8, 9]},
+      "validation": "10+A",
+      "hint": "Just put a 1 in front!"
+    },
+    {
+      "id": "var-compare",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} + {B} + 1 = ?",
+      "variables": {"A": [1, 2, 3], "B": [1, 2, 3]},
+      "validation": "A+B+1",
+      "hint": "Add all three numbers"
     }
   ]
 }
