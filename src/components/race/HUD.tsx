@@ -5,9 +5,10 @@ interface HUDProps {
   profile: Profile;
   raceSession: RaceSession;
   onPause: () => void;
+  bossActive?: boolean;
 }
 
-export function HUD({ profile, raceSession, onPause }: HUDProps) {
+export function HUD({ profile, raceSession, onPause, bossActive = false }: HUDProps) {
   const maxHearts = profile.stats.shield;
   const currentHearts = maxHearts - raceSession.shieldHits;
 
@@ -18,7 +19,7 @@ export function HUD({ profile, raceSession, onPause }: HUDProps) {
   return (
     <div className="absolute inset-0 pointer-events-none">
       {/* Top bar background */}
-      <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-black/40 to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-black/50 to-transparent" />
 
       {/* Top Left - Hearts */}
       <div className="absolute top-3 left-3 flex gap-1">
@@ -54,8 +55,9 @@ export function HUD({ profile, raceSession, onPause }: HUDProps) {
         </svg>
       </button>
 
-      {/* Top Right - Shards */}
-      <div className="absolute top-3 right-3">
+      {/* Top Right - Shards + Rocks */}
+      <div className="absolute top-3 right-3 flex flex-col gap-1.5">
+        {/* Shards */}
         <div className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm rounded-full px-3 py-1.5 border border-yellow-500/20">
           <svg className="w-4 h-4 text-yellow-400" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 2L2 12l10 10 10-10L12 2zm0 3.5L18.5 12 12 18.5 5.5 12 12 5.5z" />
@@ -64,6 +66,17 @@ export function HUD({ profile, raceSession, onPause }: HUDProps) {
             {raceSession.shardsCollected}
           </span>
         </div>
+        {/* Rocks destroyed */}
+        {raceSession.rocksDestroyed > 0 && (
+          <div className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm rounded-full px-3 py-1 border border-orange-500/20">
+            <svg className="w-3.5 h-3.5 text-orange-400" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="8" />
+            </svg>
+            <span className="text-orange-400 font-bold text-xs font-mono">
+              {raceSession.rocksDestroyed}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Bottom Center - Distance */}
@@ -93,6 +106,23 @@ export function HUD({ profile, raceSession, onPause }: HUDProps) {
                   transition={{ duration: 0.05 }}
                 />
               </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Boss fight indicator */}
+      <AnimatePresence>
+        {bossActive && (
+          <motion.div
+            className="absolute top-14 left-1/2 -translate-x-1/2"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <div className="flex items-center gap-2 bg-purple-900/40 backdrop-blur-sm rounded-full px-4 py-1 border border-purple-500/30">
+              <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+              <span className="text-purple-300 text-xs font-bold tracking-wider">BOSS FIGHT</span>
             </div>
           </motion.div>
         )}
