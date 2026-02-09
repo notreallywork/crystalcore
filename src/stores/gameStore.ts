@@ -70,6 +70,8 @@ interface GameStoreActions {
   activateBoost: () => void;
   decayBoost: (deltaTime: number) => void;
   updateDistance: (distance: number) => void;
+  destroyRock: () => void;
+  defeatBoss: () => void;
 
   canAffordNode: (node: TechTreeNode) => boolean;
   purchaseNode: (node: TechTreeNode) => boolean;
@@ -140,6 +142,8 @@ export const useGameStore = create<GameStore>()(
             shieldHits: 0,
             isBoosting: false,
             boostTimeLeft: 0,
+            bossesDefeated: 0,
+            rocksDestroyed: 0,
           },
         });
       },
@@ -264,6 +268,30 @@ export const useGameStore = create<GameStore>()(
             currentRun: {
               ...state.currentRun,
               distance: state.currentRun.distance + distance,
+            },
+          };
+        });
+      },
+
+      destroyRock: () => {
+        set((state) => {
+          if (!state.currentRun) return state;
+          return {
+            currentRun: {
+              ...state.currentRun,
+              rocksDestroyed: state.currentRun.rocksDestroyed + 1,
+            },
+          };
+        });
+      },
+
+      defeatBoss: () => {
+        set((state) => {
+          if (!state.currentRun) return state;
+          return {
+            currentRun: {
+              ...state.currentRun,
+              bossesDefeated: state.currentRun.bossesDefeated + 1,
             },
           };
         });

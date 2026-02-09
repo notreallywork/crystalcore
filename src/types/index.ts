@@ -51,6 +51,8 @@ export interface RaceSession {
   shieldHits: number;
   isBoosting: boolean;
   boostTimeLeft: number;
+  bossesDefeated: number;
+  rocksDestroyed: number;
 }
 
 export interface MathProblem {
@@ -116,8 +118,10 @@ export interface Obstacle {
   y: number;
   width: number;
   height: number;
-  lane: number;
   type: 'crystal' | 'rock';
+  rotation: number;
+  rotationSpeed: number;
+  shape?: { x: number; y: number }[];
 }
 
 export interface Gate {
@@ -130,6 +134,35 @@ export interface Gate {
   problem: MathProblem | null;
   solved: boolean | null;
   approached: boolean;
+}
+
+export interface Projectile {
+  id: string;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  width: number;
+  height: number;
+  damage: number;
+  fromBoss: boolean;
+}
+
+export interface Boss {
+  id: string;
+  x: number;
+  y: number;
+  targetY: number;
+  width: number;
+  height: number;
+  health: number;
+  maxHealth: number;
+  phase: 'entering' | 'attack' | 'math' | 'defeated';
+  shootTimer: number;
+  moveDirection: number;
+  damageFlash: number;
+  reward: number;
+  mathTriggered: boolean;
 }
 
 export interface Particle {
@@ -146,8 +179,9 @@ export interface Particle {
 
 export interface ShipState {
   x: number;
+  y: number;
   targetX: number;
-  lane: number;
+  targetY: number;
   width: number;
   height: number;
 }
