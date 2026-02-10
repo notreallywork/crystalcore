@@ -6,16 +6,20 @@ import { GameCanvas } from '@/components/race/GameCanvas';
 import { TechTree } from '@/components/garage/TechTree';
 import { UpgradeShop } from '@/components/garage/UpgradeShop';
 import { MathQuiz } from '@/components/garage/MathQuiz';
-import type { ProfileId, CompetencyLevel } from '@/types';
+import { StageSelect } from '@/components/StageSelect';
+import type { ProfileId, CompetencyLevel, StageConfig } from '@/types';
 
-type Screen = 'select' | 'create' | 'race' | 'garage' | 'settings';
+type Screen = 'select' | 'create' | 'home' | 'race' | 'settings';
+type HomeTab = 'mission' | 'garage';
 type GarageTab = 'tree' | 'upgrades' | 'quiz';
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('select');
   const [isPaused, setIsPaused] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<ProfileId | null>(null);
+  const [homeTab, setHomeTab] = useState<HomeTab>('mission');
   const [garageTab, setGarageTab] = useState<GarageTab>('tree');
+  const [activeStage, setActiveStage] = useState<StageConfig | null>(null);
 
   // Create profile form state
   const [newName, setNewName] = useState('');
@@ -24,13 +28,13 @@ function App() {
 
   const {
     profiles,
-    activeProfileId,
     setActiveProfile,
     getActiveProfile,
     addProfile,
     deleteProfile,
     resetProfile,
     updateProfile,
+    completeStage,
   } = useGameStore();
 
   const activeProfile = getActiveProfile();
@@ -47,7 +51,8 @@ function App() {
 
   const handleProfileSelect = (profileId: ProfileId) => {
     setActiveProfile(profileId);
-    setCurrentScreen('race');
+    setHomeTab('mission');
+    setCurrentScreen('home');
   };
 
   const handleCreateProfile = () => {
@@ -63,8 +68,16 @@ function App() {
     setCurrentScreen('select');
   };
 
+  const handleStageSelect = (stage: StageConfig) => {
+    setActiveStage(stage);
+    setIsPaused(false);
+    setCurrentScreen('race');
+  };
+
   const handleEndRace = () => {
-    setCurrentScreen('select');
+    // Mark stage as completed if it was a stage clear (the engine handles this via onStageClear)
+    setCurrentScreen('home');
+    setHomeTab('mission');
   };
 
   const handleDelete = (profileId: ProfileId) => {
@@ -152,29 +165,14 @@ function App() {
               New Player
             </motion.button>
 
-            {/* Secondary Actions */}
-            <div className="flex gap-3">
-              <motion.button
-                onClick={() => {
-                  if (profiles.length > 0) {
-                    if (!activeProfileId) setActiveProfile(profiles[0].id);
-                    setCurrentScreen('garage');
-                  }
-                }}
-                disabled={profiles.length === 0}
-                className="flex-1 py-2.5 bg-white/5 hover:bg-white/8 rounded-xl text-white/50 hover:text-white/70 text-sm font-medium transition-all disabled:opacity-30 disabled:cursor-not-allowed border border-white/5"
-                whileTap={{ scale: 0.98 }}
-              >
-                Garage
-              </motion.button>
-              <motion.button
-                onClick={() => setCurrentScreen('settings')}
-                className="flex-1 py-2.5 bg-white/5 hover:bg-white/8 rounded-xl text-white/50 hover:text-white/70 text-sm font-medium transition-all border border-white/5"
-                whileTap={{ scale: 0.98 }}
-              >
-                Settings
-              </motion.button>
-            </div>
+            {/* Settings */}
+            <motion.button
+              onClick={() => setCurrentScreen('settings')}
+              className="w-full py-2.5 bg-white/5 hover:bg-white/8 rounded-xl text-white/50 hover:text-white/70 text-sm font-medium transition-all border border-white/5"
+              whileTap={{ scale: 0.98 }}
+            >
+              Settings
+            </motion.button>
           </div>
         </div>
 
@@ -319,6 +317,105 @@ function App() {
     );
   }
 
+  // Profile Home Screen (Mission | Garage)
+  if (currentScreen === 'home' && activeProfile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#0A0A1A] via-[#0F0F2E] to-[#1A1A3E] flex flex-col no-select">
+        {/* Header with profile info */}
+        <header className="p-4 flex items-center gap-3">
+          <button
+            onClick={() => setCurrentScreen('select')}
+            className="px-3 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white/60 hover:text-white transition-colors text-sm border border-white/5"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <div className="flex items-center gap-2.5 flex-1">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{ backgroundColor: activeProfile.cosmetics.color + '25' }}
+            >
+              <svg className="w-5 h-5" viewBox="0 0 100 100" fill={activeProfile.cosmetics.color}>
+                <path d="M50 10 L70 70 L50 55 L30 70 Z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-white font-bold text-sm leading-tight">{activeProfile.name}</h2>
+              <div className="flex items-center gap-2">
+                <span className="text-yellow-400/70 text-xs font-mono">{activeProfile.shards} shards</span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Mission / Garage Tab Bar */}
+        <div className="flex gap-1 px-4 mb-3">
+          <button
+            onClick={() => setHomeTab('mission')}
+            className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all border ${
+              homeTab === 'mission'
+                ? 'bg-gradient-to-r from-cyan-500/15 to-blue-500/15 border-cyan-500/25 text-cyan-300'
+                : 'bg-white/2 border-white/5 text-white/35 hover:bg-white/5 hover:text-white/50'
+            }`}
+          >
+            Mission
+          </button>
+          <button
+            onClick={() => setHomeTab('garage')}
+            className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all border ${
+              homeTab === 'garage'
+                ? 'bg-gradient-to-r from-orange-500/15 to-yellow-500/15 border-orange-500/25 text-orange-300'
+                : 'bg-white/2 border-white/5 text-white/35 hover:bg-white/5 hover:text-white/50'
+            }`}
+          >
+            Garage
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        <main className="flex-1 overflow-y-auto">
+          {homeTab === 'mission' && (
+            <StageSelect
+              profile={activeProfile}
+              onStageSelect={handleStageSelect}
+            />
+          )}
+
+          {homeTab === 'garage' && (
+            <>
+              {/* Garage Sub-tabs */}
+              <div className="flex gap-1 px-4 mb-2">
+                {([
+                  { key: 'tree' as GarageTab, label: 'Tech Tree' },
+                  { key: 'upgrades' as GarageTab, label: 'Upgrades' },
+                  { key: 'quiz' as GarageTab, label: 'Math Quiz' },
+                ]).map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setGarageTab(tab.key)}
+                    className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all border ${
+                      garageTab === tab.key
+                        ? 'bg-white/8 border-white/15 text-white'
+                        : 'bg-white/2 border-white/5 text-white/35 hover:bg-white/5 hover:text-white/50'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              <div className="h-[calc(100vh-220px)]">
+                {garageTab === 'tree' && <TechTree profile={activeProfile} />}
+                {garageTab === 'upgrades' && <UpgradeShop profile={activeProfile} />}
+                {garageTab === 'quiz' && <MathQuiz profile={activeProfile} />}
+              </div>
+            </>
+          )}
+        </main>
+      </div>
+    );
+  }
+
   // Race Screen
   if (currentScreen === 'race' && activeProfile) {
     return (
@@ -328,6 +425,8 @@ function App() {
           onEndRace={handleEndRace}
           onPause={() => setIsPaused((prev) => !prev)}
           isPaused={isPaused}
+          stageConfig={activeStage || undefined}
+          onStageComplete={(stageId) => completeStage(stageId)}
         />
 
         {/* Pause Menu */}
@@ -345,7 +444,10 @@ function App() {
                 animate={{ scale: 1 }}
                 exit={{ scale: 0.9 }}
               >
-                <h2 className="text-3xl font-bold text-white mb-6">Paused</h2>
+                <h2 className="text-3xl font-bold text-white mb-2">Paused</h2>
+                {activeStage && (
+                  <p className="text-white/30 text-sm mb-4">Stage {activeStage.id} - {activeStage.name}</p>
+                )}
                 <div className="space-y-3">
                   <motion.button
                     onClick={() => setIsPaused(false)}
@@ -369,86 +471,6 @@ function App() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Back Button */}
-        <button
-          onClick={handleEndRace}
-          className="absolute top-4 left-4 z-40 px-3 py-1.5 bg-black/30 backdrop-blur-sm rounded-full text-white/40 hover:text-white text-sm transition-colors border border-white/10"
-        >
-          Back
-        </button>
-      </div>
-    );
-  }
-
-  // Garage Screen
-  if (currentScreen === 'garage') {
-    const garageProfile = activeProfile || profiles[0];
-    if (!garageProfile) {
-      setCurrentScreen('select');
-      return null;
-    }
-
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0A0A1A] to-[#1A1A3E]">
-        {/* Header */}
-        <header className="p-4 flex items-center justify-between">
-          <button
-            onClick={() => setCurrentScreen('select')}
-            className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white/60 hover:text-white transition-colors text-sm border border-white/5"
-          >
-            Back
-          </button>
-          <h1 className="text-xl font-bold text-white">Garage</h1>
-          <div className="w-16" />
-        </header>
-
-        {/* Profile Tabs */}
-        {profiles.length > 1 && (
-          <div className="flex gap-2 px-4 mb-2 overflow-x-auto scrollbar-hide">
-            {profiles.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => setActiveProfile(p.id)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap border ${
-                  activeProfileId === p.id
-                    ? 'bg-cyan-500/20 border-cyan-500/30 text-cyan-300'
-                    : 'bg-white/3 border-white/5 text-white/40 hover:bg-white/5'
-                }`}
-              >
-                {p.name}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Garage Tabs */}
-        <div className="flex gap-1 px-4 mb-2">
-          {([
-            { key: 'tree' as GarageTab, label: 'Tech Tree' },
-            { key: 'upgrades' as GarageTab, label: 'Upgrades' },
-            { key: 'quiz' as GarageTab, label: 'Math Quiz' },
-          ]).map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setGarageTab(tab.key)}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all border ${
-                garageTab === tab.key
-                  ? 'bg-white/8 border-white/15 text-white'
-                  : 'bg-white/2 border-white/5 text-white/35 hover:bg-white/5 hover:text-white/50'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab Content */}
-        <main className="h-[calc(100vh-160px)]">
-          {garageTab === 'tree' && <TechTree profile={garageProfile} />}
-          {garageTab === 'upgrades' && <UpgradeShop profile={garageProfile} />}
-          {garageTab === 'quiz' && <MathQuiz profile={garageProfile} />}
-        </main>
       </div>
     );
   }
@@ -527,7 +549,7 @@ function App() {
 
           {/* App Info */}
           <div className="text-center pt-4">
-            <p className="text-white/15 text-xs">Crystal Core v2.0</p>
+            <p className="text-white/15 text-xs">Crystal Core v3.0</p>
           </div>
         </main>
       </div>

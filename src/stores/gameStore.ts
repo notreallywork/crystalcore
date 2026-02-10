@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { Profile, ProfileId, RaceSession, TechTreeNode, CompetencyLevel } from '@/types';
 import { ProgressionEngine } from '@/engines/ProgressionEngine';
 
-const CURRENT_VERSION = 3;
+const CURRENT_VERSION = 4;
 
 const SHIP_COLORS = [
   '#00D9FF', '#9D00FF', '#00FF88', '#FF3366', '#FFD700',
@@ -28,6 +28,7 @@ export function createProfile(
     treeIndex: 0,
     unlockedNodes: [],
     difficulty: competency === 'beginner' ? 1 : competency === 'intermediate' ? 2 : 3,
+    completedStages: [],
     stats: {
       speed: 1.0,
       shield: 3,
@@ -74,6 +75,7 @@ interface GameStoreActions {
   destroyRock: () => void;
   defeatBoss: () => void;
 
+  completeStage: (stageId: string) => void;
   canAffordNode: (node: TechTreeNode) => boolean;
   purchaseNode: (node: TechTreeNode) => boolean;
 
@@ -298,6 +300,18 @@ export const useGameStore = create<GameStore>()(
         });
       },
 
+      completeStage: (stageId) => {
+        const { activeProfileId } = get();
+        if (!activeProfileId) return;
+        set((state) => ({
+          profiles: state.profiles.map((p) =>
+            p.id === activeProfileId && !p.completedStages.includes(stageId)
+              ? { ...p, completedStages: [...p.completedStages, stageId] }
+              : p
+          ),
+        }));
+      },
+
       canAffordNode: (node) => {
         const profile = get().getActiveProfile();
         if (!profile) return false;
@@ -430,6 +444,7 @@ export const useGameStore = create<GameStore>()(
               treeIndex: (oldEmerson.treeIndex as number) || 0,
               unlockedNodes: (oldEmerson.unlockedNodes as string[]) || [],
               difficulty: (oldEmerson.difficulty as number) || 1,
+              completedStages: [],
               stats: { speed: 1.0, shield: 3, boostDuration: 3, weaponLevel: 1, ...((oldEmerson.stats as Partial<Profile['stats']>) || {}) },
               cosmetics: (oldEmerson.cosmetics as Profile['cosmetics']) || { color: '#00D9FF', trail: 'none', shipShape: 'default' },
               preferences: (oldEmerson.preferences as Profile['preferences']) || { steering: 'auto' },
@@ -450,6 +465,7 @@ export const useGameStore = create<GameStore>()(
               treeIndex: (oldKyra.treeIndex as number) || 0,
               unlockedNodes: (oldKyra.unlockedNodes as string[]) || [],
               difficulty: (oldKyra.difficulty as number) || 1,
+              completedStages: [],
               stats: { speed: 1.0, shield: 3, boostDuration: 3, weaponLevel: 1, ...((oldKyra.stats as Partial<Profile['stats']>) || {}) },
               cosmetics: (oldKyra.cosmetics as Profile['cosmetics']) || { color: '#9D00FF', trail: 'none', shipShape: 'default' },
               preferences: (oldKyra.preferences as Profile['preferences']) || { steering: 'manual' },
@@ -478,6 +494,19 @@ export const useGameStore = create<GameStore>()(
                 ...p.stats,
                 weaponLevel: p.stats.weaponLevel || 1,
               },
+              completedStages: (p as Profile).completedStages || [],
+            })),
+            version: CURRENT_VERSION,
+          };
+        }
+        // v3 -> v4: add completedStages to profiles
+        if (version < 4) {
+          const profiles = (state.profiles as Profile[]) || [];
+          return {
+            ...state,
+            profiles: profiles.map((p) => ({
+              ...p,
+              completedStages: (p as Profile).completedStages || [],
             })),
             version: CURRENT_VERSION,
           };

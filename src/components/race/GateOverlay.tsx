@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Profile, MathProblem, Gate } from '@/types';
 import { MathValidator } from '@/engines/MathValidator';
@@ -20,9 +20,24 @@ export function GateOverlay({ gate, profile, onSolve, onSkip, isBossChallenge = 
   const [draggedCrystals, setDraggedCrystals] = useState<number>(0);
   const [solved, setSolved] = useState<boolean | null>(null);
 
+  // Refs to prevent double-firing and clean up timeouts
+  const solvedRef = useRef(false);
+  const solveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onSolveRef = useRef(onSolve);
+  onSolveRef.current = onSolve;
+
   const isYoung = profile.age <= 8;
   const solveTime = isYoung ? emersonGates.solveTime : kyraGates.solveTime;
   const templates = isYoung ? emersonGates.templates : kyraGates.templates;
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (solveTimeoutRef.current) {
+        clearTimeout(solveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (gate.problem) {
@@ -33,6 +48,7 @@ export function GateOverlay({ gate, profile, onSolve, onSkip, isBossChallenge = 
       setProblem(generatedProblem);
     }
     setTimeLeft(isBossChallenge ? solveTime + 3 : solveTime);
+    solvedRef.current = false;
   }, [gate.id]);
 
   useEffect(() => {
@@ -41,7 +57,12 @@ export function GateOverlay({ gate, profile, onSolve, onSkip, isBossChallenge = 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 0.1) {
-          handleTimeout();
+          // Use ref to prevent double-fire from interval
+          if (!solvedRef.current) {
+            solvedRef.current = true;
+            setSolved(false);
+            solveTimeoutRef.current = setTimeout(() => onSolveRef.current(false), 800);
+          }
           return 0;
         }
         return prev - 0.1;
@@ -51,12 +72,12 @@ export function GateOverlay({ gate, profile, onSolve, onSkip, isBossChallenge = 
     return () => clearInterval(timer);
   }, [solved]);
 
-  const handleTimeout = useCallback(() => {
-    if (solved === null) {
-      setSolved(false);
-      setTimeout(() => onSolve(false), 800);
-    }
-  }, [solved, onSolve]);
+  const triggerSolve = useCallback((isCorrect: boolean) => {
+    if (solvedRef.current) return;
+    solvedRef.current = true;
+    setSolved(isCorrect);
+    solveTimeoutRef.current = setTimeout(() => onSolveRef.current(isCorrect), 800);
+  }, []);
 
   const handleNumpadInput = (digit: string) => {
     if (solved !== null) return;
@@ -77,8 +98,7 @@ export function GateOverlay({ gate, profile, onSolve, onSkip, isBossChallenge = 
     if (isNaN(numAnswer)) return;
     const isCorrect = MathValidator.validateAnswer(problem, numAnswer);
 
-    setSolved(isCorrect);
-    setTimeout(() => onSolve(isCorrect), 800);
+    triggerSolve(isCorrect);
   };
 
   const handleDragStart = (count: number) => {
@@ -94,8 +114,7 @@ export function GateOverlay({ gate, profile, onSolve, onSkip, isBossChallenge = 
       ? draggedCrystals
       : (problem.setup?.pileA?.count || 0) + (problem.setup?.pileB?.count || 0);
     const isCorrect = MathValidator.validateAnswer(problem, total);
-    setSolved(isCorrect);
-    setTimeout(() => onSolve(isCorrect), 800);
+    triggerSolve(isCorrect);
   };
 
   const maxTime = isBossChallenge ? solveTime + 3 : solveTime;

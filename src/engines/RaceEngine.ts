@@ -10,6 +10,7 @@ import type {
   MathProblem,
   Powerup,
   PowerupType,
+  StageConfig,
 } from '@/types';
 import { MathValidator } from './MathValidator';
 import { SoundEngine } from './SoundEngine';
@@ -91,6 +92,7 @@ export class RaceEngine {
   private profile: Profile;
   private track: TrackConfig;
   private callbacks: RaceEngineCallbacks;
+  private stageConfig: StageConfig | null;
 
   // Game objects
   private ship: ShipState;
@@ -140,12 +142,14 @@ export class RaceEngine {
     profile: Profile,
     track: TrackConfig,
     callbacks: RaceEngineCallbacks,
+    stageConfig?: StageConfig,
   ) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
     this.profile = profile;
     this.track = track;
     this.callbacks = callbacks;
+    this.stageConfig = stageConfig || null;
 
     this.resize();
 
@@ -342,13 +346,13 @@ export class RaceEngine {
   // ═══════════════════════════════════════
 
   private getObstacleSpawnInterval(): number {
-    // Gets faster after each boss defeated
-    return Math.max(500, OBSTACLE_SPAWN_INTERVAL - this.bossesDefeated * 120);
+    const base = this.stageConfig?.obstacleInterval ?? OBSTACLE_SPAWN_INTERVAL;
+    return Math.max(500, base - this.bossesDefeated * 120);
   }
 
   private getScrollSpeedMultiplier(): number {
-    // Gradually increase scroll speed based on bosses defeated
-    return 1 + this.bossesDefeated * 0.12;
+    const base = this.stageConfig?.speedMultiplier ?? 1;
+    return base + this.bossesDefeated * 0.12;
   }
 
   private getBossHealth(): number {
@@ -469,7 +473,8 @@ export class RaceEngine {
     }
 
     this.gateTimer += dt * 1000;
-    if (this.gateTimer >= GATE_SPAWN_INTERVAL) {
+    const gateInterval = this.stageConfig?.gateInterval ?? GATE_SPAWN_INTERVAL;
+    if (this.gateTimer >= gateInterval) {
       this.spawnGate();
       this.gateTimer = 0;
     }
@@ -482,8 +487,10 @@ export class RaceEngine {
       this.shootTimer = 0;
     }
 
-    // Boss spawn check
-    if (!this.boss && this.distance - this.lastBossDistance >= BOSS_SPAWN_DISTANCE && this.distance > 2000) {
+    // Boss spawn check (respect stage boss count limit)
+    const maxBosses = this.stageConfig?.bossCount ?? Infinity;
+    if (!this.boss && this.bossesDefeated < maxBosses &&
+        this.distance - this.lastBossDistance >= BOSS_SPAWN_DISTANCE && this.distance > 2000) {
       this.spawnBoss();
     }
 
@@ -494,7 +501,8 @@ export class RaceEngine {
     }
 
     // Stage distance limit
-    if (!this.stageClearTriggered && this.distance >= STAGE_DISTANCE) {
+    const stageDistance = this.stageConfig?.distance ?? STAGE_DISTANCE;
+    if (!this.stageClearTriggered && this.distance >= stageDistance) {
       this.stageClearTriggered = true;
       this.callbacks.onStageClear();
     }
@@ -679,10 +687,9 @@ export class RaceEngine {
         this.callbacks.onGateApproach(gate);
       }
 
-      // Gate passed without solving
+      // Gate scrolled past without solving
       if (gate.y > this.ship.y + SHIP_HEIGHT && gate.solved === null) {
         gate.solved = false;
-        this.callbacks.onGatePass(false);
       }
 
       return gate.y < CANVAS_HEIGHT + 200;
@@ -838,7 +845,8 @@ export class RaceEngine {
     const x = padding + Math.random() * (CANVAS_WIDTH - padding * 2);
     const size = OBSTACLE_SIZE_MIN + Math.random() * (OBSTACLE_SIZE_MAX - OBSTACLE_SIZE_MIN);
     // More rocks at higher difficulty (less crystals)
-    const crystalChance = Math.max(0.25, 0.55 - this.bossesDefeated * 0.06);
+    const baseCrystalChance = this.stageConfig?.crystalChance ?? 0.55;
+    const crystalChance = Math.max(0.25, baseCrystalChance - this.bossesDefeated * 0.06);
     const isCrystal = Math.random() < crystalChance;
 
     const obstacle: Obstacle = {
@@ -1906,12 +1914,13 @@ export class RaceEngine {
   }
 
   private renderStageProgress(ctx: CanvasRenderingContext2D) {
+    const stageDistance = this.stageConfig?.distance ?? STAGE_DISTANCE;
     // Stage progress bar at bottom
     const barWidth = Math.min(CANVAS_WIDTH * 0.35, 180);
     const barHeight = 4;
     const barX = (CANVAS_WIDTH - barWidth) / 2;
     const barY = CANVAS_HEIGHT - 42;
-    const progress = Math.min(this.distance / STAGE_DISTANCE, 1);
+    const progress = Math.min(this.distance / stageDistance, 1);
 
     ctx.save();
     ctx.globalAlpha = 0.4;
@@ -1934,7 +1943,7 @@ export class RaceEngine {
     ctx.fillStyle = '#FFFFFF';
     ctx.font = '9px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`${Math.floor(this.distance / 1000)}/${STAGE_DISTANCE / 1000}km`, CANVAS_WIDTH / 2, barY - 3);
+    ctx.fillText(`${Math.floor(this.distance / 1000)}/${stageDistance / 1000}km`, CANVAS_WIDTH / 2, barY - 3);
     ctx.restore();
   }
 
@@ -1983,7 +1992,6 @@ export class RaceEngine {
     const gate = this.gates.find((g) => g.id === gateId);
     if (gate) {
       gate.solved = correct;
-      this.callbacks.onGatePass(correct);
       if (correct) {
         this.spawnShardCollectParticles(gate.x, gate.y);
       }
