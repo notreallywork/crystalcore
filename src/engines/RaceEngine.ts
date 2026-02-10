@@ -12,6 +12,7 @@ import type {
   PowerupType,
 } from '@/types';
 import { MathValidator } from './MathValidator';
+import { SoundEngine } from './SoundEngine';
 import emersonGates from '@/content/gates/emerson.json';
 import kyraGates from '@/content/gates/kyra.json';
 
@@ -35,18 +36,18 @@ const PROJECTILE_HEIGHT = 18;
 const SHOOT_INTERVAL = 0.28;
 const BOSS_WIDTH = 120;
 const BOSS_HEIGHT = 80;
-const BOSS_SHOOT_INTERVAL = 1.8;
-const BOSS_PROJECTILE_SPEED = 220;
-const BOSS_MAX_HEALTH = 15;
+const BOSS_BASE_SHOOT_INTERVAL = 0.9;
+const BOSS_BASE_PROJECTILE_SPEED = 320;
+const BOSS_BASE_MAX_HEALTH = 50;
 const BOSS_MATH_THRESHOLD = 0.5;
 const BOSS_REWARD = 75;
 const BOOST_SPEED_MULTIPLIER = 1.5;
 const SHIP_MOVE_SPEED = 1000;
-const SHIP_LERP_TOUCH = 0.21;
 const GATE_HEIGHT = 60;
-const STAGE_DISTANCE = 25000;
+const STAGE_DISTANCE = 20000;
 const POWERUP_DROP_CHANCE = 0.2;
 const POWERUP_SIZE = 28;
+const JOYSTICK_MAX_RADIUS = 55;
 
 interface RaceEngineCallbacks {
   onShardCollect: (amount: number) => void;
@@ -120,6 +121,7 @@ export class RaceEngine {
   private bossWarningTimer = 0;
   private rapidFireTimer = 0;
   private stageClearTriggered = false;
+  private bossesDefeated = 0;
 
   // Background
   private starLayers: Star[][] = [];
@@ -128,8 +130,10 @@ export class RaceEngine {
 
   // Input
   private keys = new Set<string>();
-  private touchActive = false;
-  private touchTarget = { x: 0, y: 0 };
+  // Virtual joystick
+  private joystickActive = false;
+  private joystickCenter = { x: 0, y: 0 };
+  private joystickThumb = { x: 0, y: 0 };
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -163,8 +167,8 @@ export class RaceEngine {
     this.handleTouchEnd = this.handleTouchEnd.bind(this);
     this.handleKeyDown = this.handleKeyDown.bind(this);
     this.handleKeyUp = this.handleKeyUp.bind(this);
-    this.handleMouseMove = this.handleMouseMove.bind(this);
     this.handleMouseDown = this.handleMouseDown.bind(this);
+    this.handleMouseMove = this.handleMouseMove.bind(this);
     this.handleMouseUp = this.handleMouseUp.bind(this);
 
     this.setupInputHandlers();
@@ -252,55 +256,77 @@ export class RaceEngine {
   }
 
   // ═══════════════════════════════════════
-  // INPUT HANDLERS
+  // INPUT HANDLERS (Virtual Joystick)
   // ═══════════════════════════════════════
 
   private handleTouchStart(e: TouchEvent) {
     e.preventDefault();
     const touch = e.touches[0];
     const rect = this.canvas.getBoundingClientRect();
-    this.touchActive = true;
-    this.touchTarget.x = touch.clientX - rect.left;
-    this.touchTarget.y = touch.clientY - rect.top;
-    this.ship.targetX = this.touchTarget.x;
-    this.ship.targetY = Math.min(this.touchTarget.y, CANVAS_HEIGHT * 0.92);
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    this.joystickActive = true;
+    this.joystickCenter.x = x;
+    this.joystickCenter.y = y;
+    this.joystickThumb.x = x;
+    this.joystickThumb.y = y;
   }
 
   private handleTouchMove(e: TouchEvent) {
     e.preventDefault();
+    if (!this.joystickActive) return;
     const touch = e.touches[0];
     const rect = this.canvas.getBoundingClientRect();
-    this.touchTarget.x = touch.clientX - rect.left;
-    this.touchTarget.y = touch.clientY - rect.top;
-    this.ship.targetX = this.touchTarget.x;
-    this.ship.targetY = Math.min(this.touchTarget.y, CANVAS_HEIGHT * 0.92);
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    // Clamp thumb to max radius from center
+    const dx = x - this.joystickCenter.x;
+    const dy = y - this.joystickCenter.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > JOYSTICK_MAX_RADIUS) {
+      this.joystickThumb.x = this.joystickCenter.x + (dx / dist) * JOYSTICK_MAX_RADIUS;
+      this.joystickThumb.y = this.joystickCenter.y + (dy / dist) * JOYSTICK_MAX_RADIUS;
+    } else {
+      this.joystickThumb.x = x;
+      this.joystickThumb.y = y;
+    }
   }
 
   private handleTouchEnd(e: TouchEvent) {
     e.preventDefault();
-    this.touchActive = false;
+    this.joystickActive = false;
   }
 
   private handleMouseDown(e: MouseEvent) {
     const rect = this.canvas.getBoundingClientRect();
-    this.touchActive = true;
-    this.touchTarget.x = e.clientX - rect.left;
-    this.touchTarget.y = e.clientY - rect.top;
-    this.ship.targetX = this.touchTarget.x;
-    this.ship.targetY = Math.min(this.touchTarget.y, CANVAS_HEIGHT * 0.92);
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    this.joystickActive = true;
+    this.joystickCenter.x = x;
+    this.joystickCenter.y = y;
+    this.joystickThumb.x = x;
+    this.joystickThumb.y = y;
   }
 
   private handleMouseMove(e: MouseEvent) {
-    if (!this.touchActive) return;
+    if (!this.joystickActive) return;
     const rect = this.canvas.getBoundingClientRect();
-    this.touchTarget.x = e.clientX - rect.left;
-    this.touchTarget.y = e.clientY - rect.top;
-    this.ship.targetX = this.touchTarget.x;
-    this.ship.targetY = Math.min(this.touchTarget.y, CANVAS_HEIGHT * 0.92);
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const dx = x - this.joystickCenter.x;
+    const dy = y - this.joystickCenter.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > JOYSTICK_MAX_RADIUS) {
+      this.joystickThumb.x = this.joystickCenter.x + (dx / dist) * JOYSTICK_MAX_RADIUS;
+      this.joystickThumb.y = this.joystickCenter.y + (dy / dist) * JOYSTICK_MAX_RADIUS;
+    } else {
+      this.joystickThumb.x = x;
+      this.joystickThumb.y = y;
+    }
   }
 
   private handleMouseUp() {
-    this.touchActive = false;
+    this.joystickActive = false;
   }
 
   private handleKeyDown(e: KeyboardEvent) {
@@ -309,6 +335,34 @@ export class RaceEngine {
 
   private handleKeyUp(e: KeyboardEvent) {
     this.keys.delete(e.key);
+  }
+
+  // ═══════════════════════════════════════
+  // DIFFICULTY SCALING
+  // ═══════════════════════════════════════
+
+  private getObstacleSpawnInterval(): number {
+    // Gets faster after each boss defeated
+    return Math.max(500, OBSTACLE_SPAWN_INTERVAL - this.bossesDefeated * 120);
+  }
+
+  private getScrollSpeedMultiplier(): number {
+    // Gradually increase scroll speed based on bosses defeated
+    return 1 + this.bossesDefeated * 0.12;
+  }
+
+  private getBossHealth(): number {
+    const isYoung = this.profile.age <= 8;
+    const baseHp = isYoung ? Math.floor(BOSS_BASE_MAX_HEALTH * 0.6) : BOSS_BASE_MAX_HEALTH;
+    return Math.floor(baseHp * (1 + this.bossesDefeated * 0.5));
+  }
+
+  private getBossShootInterval(): number {
+    return Math.max(0.35, BOSS_BASE_SHOOT_INTERVAL - this.bossesDefeated * 0.12);
+  }
+
+  private getBossProjectileSpeed(): number {
+    return BOSS_BASE_PROJECTILE_SPEED + this.bossesDefeated * 30;
   }
 
   // ═══════════════════════════════════════
@@ -353,7 +407,8 @@ export class RaceEngine {
 
   private update(dt: number) {
     const boostMul = this.isBoosting ? BOOST_SPEED_MULTIPLIER : 1.0;
-    const scrollSpeed = BASE_SCROLL_SPEED * this.profile.stats.speed * boostMul;
+    const scrollMul = this.getScrollSpeedMultiplier();
+    const scrollSpeed = BASE_SCROLL_SPEED * this.profile.stats.speed * boostMul * scrollMul;
 
     // Distance
     const distanceDelta = scrollSpeed * dt;
@@ -405,9 +460,10 @@ export class RaceEngine {
     this.updateParticles(dt);
     this.updateBackground(dt, scrollSpeed);
 
-    // Spawning
+    // Spawning with difficulty-scaled interval
     this.obstacleTimer += dt * 1000;
-    if (this.obstacleTimer >= OBSTACLE_SPAWN_INTERVAL) {
+    const spawnInterval = this.getObstacleSpawnInterval();
+    if (this.obstacleTimer >= spawnInterval) {
       this.spawnObstacle();
       this.obstacleTimer = 0;
     }
@@ -449,21 +505,36 @@ export class RaceEngine {
   private updateShip(dt: number) {
     // Keyboard movement
     const speed = SHIP_MOVE_SPEED * dt;
-    if (this.keys.has('ArrowLeft') || this.keys.has('a')) {
-      this.ship.targetX = this.ship.x - speed;
+    let kbDx = 0;
+    let kbDy = 0;
+    if (this.keys.has('ArrowLeft') || this.keys.has('a')) kbDx -= 1;
+    if (this.keys.has('ArrowRight') || this.keys.has('d')) kbDx += 1;
+    if (this.keys.has('ArrowUp') || this.keys.has('w')) kbDy -= 1;
+    if (this.keys.has('ArrowDown') || this.keys.has('s')) kbDy += 1;
+
+    if (kbDx !== 0 || kbDy !== 0) {
+      // Normalize diagonal movement
+      const len = Math.sqrt(kbDx * kbDx + kbDy * kbDy);
+      this.ship.targetX = this.ship.x + (kbDx / len) * speed;
+      this.ship.targetY = this.ship.y + (kbDy / len) * speed;
     }
-    if (this.keys.has('ArrowRight') || this.keys.has('d')) {
-      this.ship.targetX = this.ship.x + speed;
-    }
-    if (this.keys.has('ArrowUp') || this.keys.has('w')) {
-      this.ship.targetY = this.ship.y - speed;
-    }
-    if (this.keys.has('ArrowDown') || this.keys.has('s')) {
-      this.ship.targetY = this.ship.y + speed;
+
+    // Virtual joystick movement (equivalent speed to keyboard)
+    if (this.joystickActive) {
+      const dx = this.joystickThumb.x - this.joystickCenter.x;
+      const dy = this.joystickThumb.y - this.joystickCenter.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 5) { // dead zone
+        const magnitude = Math.min(dist / JOYSTICK_MAX_RADIUS, 1);
+        const nx = dx / dist;
+        const ny = dy / dist;
+        this.ship.targetX = this.ship.x + nx * speed * magnitude;
+        this.ship.targetY = this.ship.y + ny * speed * magnitude;
+      }
     }
 
     // Smooth movement towards target
-    const lerp = this.touchActive ? SHIP_LERP_TOUCH : 0.12;
+    const lerp = 0.15;
     this.ship.x += (this.ship.targetX - this.ship.x) * lerp;
     this.ship.y += (this.ship.targetY - this.ship.y) * lerp;
 
@@ -547,6 +618,7 @@ export class RaceEngine {
               // Remove boss projectiles
               this.projectiles = this.projectiles.filter((proj) => !proj.fromBoss);
               this.lastBossDistance = this.distance;
+              this.bossesDefeated++;
               setTimeout(() => {
                 this.boss = null;
               }, 1500);
@@ -632,15 +704,17 @@ export class RaceEngine {
         this.boss.phase = 'attack';
       }
     } else if (this.boss.phase === 'attack') {
-      // Move side to side
-      this.boss.x += this.boss.moveDirection * 80 * dt;
+      // Move side to side - faster with more bosses defeated
+      const moveSpeed = 80 + this.bossesDefeated * 25;
+      this.boss.x += this.boss.moveDirection * moveSpeed * dt;
       if (this.boss.x < BOSS_WIDTH / 2 + 20 || this.boss.x > CANVAS_WIDTH - BOSS_WIDTH / 2 - 20) {
         this.boss.moveDirection *= -1;
       }
 
-      // Boss shoots
+      // Boss shoots with scaled interval
       this.boss.shootTimer += dt;
-      if (this.boss.shootTimer >= BOSS_SHOOT_INTERVAL) {
+      const shootInterval = this.getBossShootInterval();
+      if (this.boss.shootTimer >= shootInterval) {
         this.boss.shootTimer = 0;
         this.fireBossProjectile();
       }
@@ -763,7 +837,9 @@ export class RaceEngine {
     const padding = 40;
     const x = padding + Math.random() * (CANVAS_WIDTH - padding * 2);
     const size = OBSTACLE_SIZE_MIN + Math.random() * (OBSTACLE_SIZE_MAX - OBSTACLE_SIZE_MIN);
-    const isCrystal = Math.random() > 0.45;
+    // More rocks at higher difficulty (less crystals)
+    const crystalChance = Math.max(0.25, 0.55 - this.bossesDefeated * 0.06);
+    const isCrystal = Math.random() < crystalChance;
 
     const obstacle: Obstacle = {
       id: `obs-${Date.now()}-${Math.random()}`,
@@ -818,8 +894,7 @@ export class RaceEngine {
   }
 
   private spawnBoss() {
-    const isYoung = this.profile.age <= 8;
-    const hp = isYoung ? Math.floor(BOSS_MAX_HEALTH * 0.6) : BOSS_MAX_HEALTH;
+    const hp = this.getBossHealth();
 
     this.boss = {
       id: `boss-${Date.now()}`,
@@ -834,7 +909,7 @@ export class RaceEngine {
       shootTimer: 0,
       moveDirection: Math.random() > 0.5 ? 1 : -1,
       damageFlash: 0,
-      reward: BOSS_REWARD,
+      reward: BOSS_REWARD + this.bossesDefeated * 25,
       mathTriggered: false,
     };
 
@@ -846,28 +921,129 @@ export class RaceEngine {
     const damage = this.getProjectileDamage();
     const wl = this.profile.stats.weaponLevel || 1;
 
-    this.projectiles.push({
-      id: `proj-${Date.now()}-${Math.random()}`,
-      x: this.ship.x,
-      y: this.ship.y - SHIP_HEIGHT / 2 - 4,
-      vx: 0,
-      vy: -PROJECTILE_SPEED,
-      width: PROJECTILE_WIDTH,
-      height: PROJECTILE_HEIGHT,
-      damage,
-      fromBoss: false,
-    });
-
-    // Level 5: dual shot
     if (wl >= 5) {
+      // Level 5: Plasma spread - dual center + 2 angled
+      SoundEngine.shootHeavy();
+      // Center dual
       this.projectiles.push({
-        id: `proj-${Date.now()}-${Math.random()}-r`,
-        x: this.ship.x + 12,
-        y: this.ship.y - SHIP_HEIGHT / 2,
+        id: `proj-${Date.now()}-${Math.random()}-cl`,
+        x: this.ship.x - 6,
+        y: this.ship.y - SHIP_HEIGHT / 2 - 4,
         vx: 0,
         vy: -PROJECTILE_SPEED,
-        width: PROJECTILE_WIDTH,
-        height: PROJECTILE_HEIGHT,
+        width: 8,
+        height: 22,
+        damage,
+        fromBoss: false,
+      });
+      this.projectiles.push({
+        id: `proj-${Date.now()}-${Math.random()}-cr`,
+        x: this.ship.x + 6,
+        y: this.ship.y - SHIP_HEIGHT / 2 - 4,
+        vx: 0,
+        vy: -PROJECTILE_SPEED,
+        width: 8,
+        height: 22,
+        damage,
+        fromBoss: false,
+      });
+      // Angled shots
+      const spreadAngle = 0.18;
+      this.projectiles.push({
+        id: `proj-${Date.now()}-${Math.random()}-sl`,
+        x: this.ship.x - 14,
+        y: this.ship.y - SHIP_HEIGHT / 2 + 4,
+        vx: -Math.sin(spreadAngle) * PROJECTILE_SPEED,
+        vy: -Math.cos(spreadAngle) * PROJECTILE_SPEED,
+        width: 5,
+        height: 14,
+        damage: Math.max(1, damage - 1),
+        fromBoss: false,
+      });
+      this.projectiles.push({
+        id: `proj-${Date.now()}-${Math.random()}-sr`,
+        x: this.ship.x + 14,
+        y: this.ship.y - SHIP_HEIGHT / 2 + 4,
+        vx: Math.sin(spreadAngle) * PROJECTILE_SPEED,
+        vy: -Math.cos(spreadAngle) * PROJECTILE_SPEED,
+        width: 5,
+        height: 14,
+        damage: Math.max(1, damage - 1),
+        fromBoss: false,
+      });
+    } else if (wl >= 4) {
+      // Level 4: Triple spread
+      SoundEngine.shootHeavy();
+      this.projectiles.push({
+        id: `proj-${Date.now()}-${Math.random()}-c`,
+        x: this.ship.x,
+        y: this.ship.y - SHIP_HEIGHT / 2 - 4,
+        vx: 0,
+        vy: -PROJECTILE_SPEED,
+        width: 7,
+        height: 20,
+        damage,
+        fromBoss: false,
+      });
+      const spreadAngle = 0.15;
+      this.projectiles.push({
+        id: `proj-${Date.now()}-${Math.random()}-l`,
+        x: this.ship.x - 10,
+        y: this.ship.y - SHIP_HEIGHT / 2,
+        vx: -Math.sin(spreadAngle) * PROJECTILE_SPEED,
+        vy: -Math.cos(spreadAngle) * PROJECTILE_SPEED,
+        width: 5,
+        height: 14,
+        damage: Math.max(1, damage - 1),
+        fromBoss: false,
+      });
+      this.projectiles.push({
+        id: `proj-${Date.now()}-${Math.random()}-r`,
+        x: this.ship.x + 10,
+        y: this.ship.y - SHIP_HEIGHT / 2,
+        vx: Math.sin(spreadAngle) * PROJECTILE_SPEED,
+        vy: -Math.cos(spreadAngle) * PROJECTILE_SPEED,
+        width: 5,
+        height: 14,
+        damage: Math.max(1, damage - 1),
+        fromBoss: false,
+      });
+    } else if (wl >= 3) {
+      // Level 3: Dual bolts
+      SoundEngine.shoot();
+      this.projectiles.push({
+        id: `proj-${Date.now()}-${Math.random()}-l`,
+        x: this.ship.x - 8,
+        y: this.ship.y - SHIP_HEIGHT / 2 - 2,
+        vx: 0,
+        vy: -PROJECTILE_SPEED,
+        width: 6,
+        height: 18,
+        damage,
+        fromBoss: false,
+      });
+      this.projectiles.push({
+        id: `proj-${Date.now()}-${Math.random()}-r`,
+        x: this.ship.x + 8,
+        y: this.ship.y - SHIP_HEIGHT / 2 - 2,
+        vx: 0,
+        vy: -PROJECTILE_SPEED,
+        width: 6,
+        height: 18,
+        damage,
+        fromBoss: false,
+      });
+    } else {
+      // Level 1-2: Single bolt (level 2 is slightly wider)
+      SoundEngine.shoot();
+      this.projectiles.push({
+        id: `proj-${Date.now()}-${Math.random()}`,
+        x: this.ship.x,
+        y: this.ship.y - SHIP_HEIGHT / 2 - 4,
+        vx: 0,
+        vy: -PROJECTILE_SPEED,
+        width: wl >= 2 ? 8 : PROJECTILE_WIDTH,
+        height: wl >= 2 ? 20 : PROJECTILE_HEIGHT,
         damage,
         fromBoss: false,
       });
@@ -876,24 +1052,84 @@ export class RaceEngine {
 
   private fireBossProjectile() {
     if (!this.boss) return;
+    const speed = this.getBossProjectileSpeed();
 
-    // Aim roughly toward player with some spread
+    SoundEngine.bossShoot();
+
+    // Aim roughly toward player
     const dx = this.ship.x - this.boss.x;
     const dy = this.ship.y - this.boss.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
-    const spread = (Math.random() - 0.5) * 0.4;
+    const nx = dx / dist;
+    const ny = dy / dist;
 
-    this.projectiles.push({
-      id: `bproj-${Date.now()}-${Math.random()}`,
-      x: this.boss.x,
-      y: this.boss.y + BOSS_HEIGHT / 2,
-      vx: (dx / dist) * BOSS_PROJECTILE_SPEED + spread * 60,
-      vy: (dy / dist) * BOSS_PROJECTILE_SPEED,
-      width: 14,
-      height: 14,
-      damage: 1,
-      fromBoss: true,
-    });
+    if (this.bossesDefeated >= 3) {
+      // Boss 4+: Spread burst (5 projectiles in a fan)
+      for (let i = -2; i <= 2; i++) {
+        const angle = Math.atan2(ny, nx) + i * 0.2;
+        this.projectiles.push({
+          id: `bproj-${Date.now()}-${Math.random()}-${i}`,
+          x: this.boss.x,
+          y: this.boss.y + BOSS_HEIGHT / 2,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          width: 12,
+          height: 12,
+          damage: 1,
+          fromBoss: true,
+        });
+      }
+    } else if (this.bossesDefeated >= 2) {
+      // Boss 3: Rapid burst (3 quick shots aimed at player)
+      for (let i = 0; i < 3; i++) {
+        const spread = (Math.random() - 0.5) * 0.3;
+        const angle = Math.atan2(ny, nx) + spread;
+        setTimeout(() => {
+          if (!this.boss || this.boss.phase !== 'attack') return;
+          this.projectiles.push({
+            id: `bproj-${Date.now()}-${Math.random()}-burst${i}`,
+            x: this.boss.x,
+            y: this.boss.y + BOSS_HEIGHT / 2,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            width: 14,
+            height: 14,
+            damage: 1,
+            fromBoss: true,
+          });
+        }, i * 120);
+      }
+    } else if (this.bossesDefeated >= 1) {
+      // Boss 2: Triple spread
+      for (let i = -1; i <= 1; i++) {
+        const angle = Math.atan2(ny, nx) + i * 0.25;
+        this.projectiles.push({
+          id: `bproj-${Date.now()}-${Math.random()}-${i}`,
+          x: this.boss.x,
+          y: this.boss.y + BOSS_HEIGHT / 2,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          width: 14,
+          height: 14,
+          damage: 1,
+          fromBoss: true,
+        });
+      }
+    } else {
+      // Boss 1: Single aimed shot with slight spread
+      const spread = (Math.random() - 0.5) * 0.4;
+      this.projectiles.push({
+        id: `bproj-${Date.now()}-${Math.random()}`,
+        x: this.boss.x,
+        y: this.boss.y + BOSS_HEIGHT / 2,
+        vx: nx * speed + spread * 60,
+        vy: ny * speed,
+        width: 14,
+        height: 14,
+        damage: 1,
+        fromBoss: true,
+      });
+    }
   }
 
   // ═══════════════════════════════════════
@@ -1046,6 +1282,9 @@ export class RaceEngine {
     this.renderStageProgress(ctx);
 
     ctx.restore();
+
+    // Render joystick on top (not affected by screen shake)
+    this.renderJoystick(this.ctx);
   }
 
   private renderBackground(ctx: CanvasRenderingContext2D) {
@@ -1249,6 +1488,7 @@ export class RaceEngine {
   }
 
   private renderProjectiles(ctx: CanvasRenderingContext2D) {
+    const wl = this.profile.stats.weaponLevel || 1;
     for (const p of this.projectiles) {
       ctx.save();
 
@@ -1264,16 +1504,71 @@ export class RaceEngine {
         ctx.beginPath();
         ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
         ctx.fill();
+      } else if (wl >= 5) {
+        // Plasma bolts - purple/white with big glow
+        ctx.shadowColor = '#CC66FF';
+        ctx.shadowBlur = 16;
+        const grad = ctx.createLinearGradient(p.x, p.y - p.height / 2, p.x, p.y + p.height / 2);
+        grad.addColorStop(0, '#FFFFFF');
+        grad.addColorStop(0.3, '#CC66FF');
+        grad.addColorStop(0.7, '#9900FF');
+        grad.addColorStop(1, '#9900FF40');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, p.width / 2, p.height / 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Core glow
+        ctx.fillStyle = '#FFFFFF';
+        ctx.globalAlpha = 0.6;
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, p.width / 4, p.height / 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (wl >= 4) {
+        // Fire spread - orange/red
+        ctx.shadowColor = '#FF6600';
+        ctx.shadowBlur = 14;
+        const grad = ctx.createLinearGradient(p.x, p.y - p.height / 2, p.x, p.y + p.height / 2);
+        grad.addColorStop(0, '#FFFFFF');
+        grad.addColorStop(0.2, '#FFAA00');
+        grad.addColorStop(0.6, '#FF6600');
+        grad.addColorStop(1, '#FF330040');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, p.width / 2, p.height / 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (wl >= 3) {
+        // Green dual bolts
+        ctx.shadowColor = '#00FF88';
+        ctx.shadowBlur = 12;
+        const grad = ctx.createLinearGradient(p.x, p.y - p.height / 2, p.x, p.y + p.height / 2);
+        grad.addColorStop(0, '#FFFFFF');
+        grad.addColorStop(0.3, '#00FF88');
+        grad.addColorStop(1, '#00FF8840');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, p.width / 2, p.height / 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (wl >= 2) {
+        // Brighter/wider cyan bolt
+        ctx.shadowColor = '#00D9FF';
+        ctx.shadowBlur = 14;
+        const grad = ctx.createLinearGradient(p.x, p.y - p.height / 2, p.x, p.y + p.height / 2);
+        grad.addColorStop(0, '#FFFFFF');
+        grad.addColorStop(0.25, '#00EEFF');
+        grad.addColorStop(0.7, '#00D9FF');
+        grad.addColorStop(1, '#00D9FF40');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, p.width / 2, p.height / 2, 0, 0, Math.PI * 2);
+        ctx.fill();
       } else {
-        // Player projectile - cyan energy bolt
+        // Level 1: Basic cyan bolt
         ctx.shadowColor = this.profile.cosmetics.color;
         ctx.shadowBlur = 10;
-
         const grad = ctx.createLinearGradient(p.x, p.y - p.height / 2, p.x, p.y + p.height / 2);
         grad.addColorStop(0, '#FFFFFF');
         grad.addColorStop(0.3, this.profile.cosmetics.color);
         grad.addColorStop(1, this.profile.cosmetics.color + '40');
-
         ctx.fillStyle = grad;
         ctx.beginPath();
         ctx.ellipse(p.x, p.y, p.width / 2, p.height / 2, 0, 0, Math.PI * 2);
@@ -1380,11 +1675,12 @@ export class RaceEngine {
     ctx.roundRect(barX, barY, barWidth * healthPercent, barHeight, 3);
     ctx.fill();
 
-    // Boss label
+    // Boss label with difficulty indicator
     ctx.fillStyle = '#9900FF';
     ctx.font = 'bold 10px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('BOSS', boss.x, barY - 4);
+    const bossLabel = this.bossesDefeated > 0 ? `BOSS LV${this.bossesDefeated + 1}` : 'BOSS';
+    ctx.fillText(bossLabel, boss.x, barY - 4);
     ctx.restore();
   }
 
@@ -1642,6 +1938,43 @@ export class RaceEngine {
     ctx.restore();
   }
 
+  private renderJoystick(ctx: CanvasRenderingContext2D) {
+    if (!this.joystickActive) return;
+
+    // Base circle
+    ctx.save();
+    ctx.globalAlpha = 0.15;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(this.joystickCenter.x, this.joystickCenter.y, JOYSTICK_MAX_RADIUS, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.globalAlpha = 0.25;
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(this.joystickCenter.x, this.joystickCenter.y, JOYSTICK_MAX_RADIUS, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Thumb circle
+    ctx.globalAlpha = 0.4;
+    ctx.fillStyle = '#00D9FF';
+    ctx.shadowColor = '#00D9FF';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(this.joystickThumb.x, this.joystickThumb.y, 18, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.globalAlpha = 0.6;
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(this.joystickThumb.x, this.joystickThumb.y, 18, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
   // ═══════════════════════════════════════
   // PUBLIC API
   // ═══════════════════════════════════════
@@ -1673,6 +2006,7 @@ export class RaceEngine {
         this.callbacks.onShardCollect(this.boss.reward);
         this.projectiles = this.projectiles.filter((p) => !p.fromBoss);
         this.lastBossDistance = this.distance;
+        this.bossesDefeated++;
         setTimeout(() => {
           this.boss = null;
         }, 1500);

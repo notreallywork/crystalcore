@@ -29,7 +29,9 @@ export function MathQuiz({ profile }: MathQuizProps) {
 
   const startQuiz = useCallback(() => {
     const gateData = isYoung ? emersonGates : kyraGates;
-    const templates = gateData.templates as MathProblem[];
+    const allTemplates = gateData.templates as MathProblem[];
+    // Filter to numpad-only problems (drag problems can't be solved in quiz)
+    const templates = allTemplates.filter(t => t.interaction === 'numpad');
     const generated: MathProblem[] = [];
     for (let i = 0; i < QUIZ_LENGTH; i++) {
       generated.push(MathValidator.getRandomProblem(templates));

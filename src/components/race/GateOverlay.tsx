@@ -89,7 +89,11 @@ export function GateOverlay({ gate, profile, onSolve, onSkip, isBossChallenge = 
   const handleDrop = () => {
     if (solved !== null || !problem) return;
 
-    const isCorrect = MathValidator.validateAnswer(problem, draggedCrystals);
+    // Auto-calculate total for tap-to-merge (works on tablet where drag doesn't)
+    const total = draggedCrystals > 0
+      ? draggedCrystals
+      : (problem.setup?.pileA?.count || 0) + (problem.setup?.pileB?.count || 0);
+    const isCorrect = MathValidator.validateAnswer(problem, total);
     setSolved(isCorrect);
     setTimeout(() => onSolve(isCorrect), 800);
   };
