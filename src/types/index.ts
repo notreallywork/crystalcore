@@ -17,6 +17,7 @@ export interface Profile {
   treeIndex: number;
   unlockedNodes: string[];
   difficulty: number;
+  completedStages: string[];
   stats: {
     speed: number;
     shield: number;
@@ -202,4 +203,17 @@ export interface SessionResults {
   gatesAttempted: number;
   correctAnswers: number;
   avgTime: number;
+}
+
+export interface StageConfig {
+  id: string;
+  world: number;
+  stage: number;
+  name: string;
+  distance: number;
+  speedMultiplier: number;
+  obstacleInterval: number;
+  crystalChance: number;
+  bossCount: number;
+  gateInterval: number;
 }

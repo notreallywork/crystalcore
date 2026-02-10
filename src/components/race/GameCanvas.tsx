@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Profile, Gate, MathProblem, PowerupType } from '@/types';
+import type { Profile, Gate, MathProblem, PowerupType, StageConfig } from '@/types';
 import { RaceEngine } from '@/engines/RaceEngine';
 import { useGameStore } from '@/stores/gameStore';
 import { SoundEngine } from '@/engines/SoundEngine';
@@ -13,9 +13,11 @@ interface GameCanvasProps {
   onEndRace: () => void;
   onPause: () => void;
   isPaused: boolean;
+  stageConfig?: StageConfig;
+  onStageComplete?: (stageId: string) => void;
 }
 
-export function GameCanvas({ profile, onEndRace, onPause, isPaused }: GameCanvasProps) {
+export function GameCanvas({ profile, onEndRace, onPause, isPaused, stageConfig, onStageComplete }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<RaceEngine | null>(null);
   const [activeGate, setActiveGate] = useState<Gate | null>(null);
@@ -121,12 +123,9 @@ export function GameCanvas({ profile, onEndRace, onPause, isPaused }: GameCanvas
             return gate;
           });
         },
-        onGatePass: (correct) => {
-          passGate(correct);
-          if (correct) {
-            activateBoost();
-          }
-          setActiveGate(null);
+        onGatePass: (_correct) => {
+          // Gate pass is handled in handleGateSolve/handleGateSkip
+          // This callback is only for gates that scroll past without being solved
         },
         onCheckpoint: () => {},
         onDistanceUpdate: (delta) => {
@@ -191,6 +190,10 @@ export function GameCanvas({ profile, onEndRace, onPause, isPaused }: GameCanvas
               bossesDefeated: 0,
             };
           }
+          // Mark stage as completed
+          if (stageConfig) {
+            onStageComplete?.(stageConfig.id);
+          }
           setShowResults(true);
         },
         onPowerupCollect: (type: PowerupType) => {
@@ -216,6 +219,7 @@ export function GameCanvas({ profile, onEndRace, onPause, isPaused }: GameCanvas
           setTimeout(() => setPowerupMessage(null), 1500);
         },
       },
+      stageConfig,
     );
 
     engineRef.current = engine;
@@ -227,7 +231,7 @@ export function GameCanvas({ profile, onEndRace, onPause, isPaused }: GameCanvas
       engine.cleanup();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile.id, track.id]);
+  }, [profile.id, track.id, stageConfig?.id]);
 
   // Handle external pause
   useEffect(() => {
@@ -243,31 +247,39 @@ export function GameCanvas({ profile, onEndRace, onPause, isPaused }: GameCanvas
   const handleGateSolve = useCallback(
     (correct: boolean) => {
       SoundEngine.gateSolve(correct);
-      if (activeGate && engineRef.current) {
-        engineRef.current.setGateResult(activeGate.id, correct);
-        const isYoung = profile.age <= 8;
-        if (correct) {
-          const reward = isYoung ? 10 : 30;
-          collectShards(reward);
-        } else {
-          collectShards(1);
+      // Use functional update to get current activeGate value
+      setActiveGate((currentGate) => {
+        if (currentGate && engineRef.current) {
+          engineRef.current.setGateResult(currentGate.id, correct);
         }
-        // Resume engine after gate
-        engineRef.current.start();
+        return null;
+      });
+      // Handle rewards
+      passGate(correct);
+      const isYoung = profile.age <= 8;
+      if (correct) {
+        activateBoost();
+        collectShards(isYoung ? 10 : 30);
+      } else {
+        collectShards(1);
       }
-      setActiveGate(null);
+      // Always resume engine
+      engineRef.current?.start();
     },
-    [activeGate, profile.age, collectShards],
+    [profile.age, collectShards, passGate, activateBoost],
   );
 
   const handleGateSkip = useCallback(() => {
-    if (activeGate && engineRef.current) {
-      engineRef.current.setGateResult(activeGate.id, false);
-      // Resume engine
-      engineRef.current.start();
-    }
-    setActiveGate(null);
-  }, [activeGate]);
+    setActiveGate((currentGate) => {
+      if (currentGate && engineRef.current) {
+        engineRef.current.setGateResult(currentGate.id, false);
+      }
+      return null;
+    });
+    passGate(false);
+    // Always resume engine
+    engineRef.current?.start();
+  }, [passGate]);
 
   const handleBossMathSolve = useCallback(
     (correct: boolean) => {
@@ -312,6 +324,16 @@ export function GameCanvas({ profile, onEndRace, onPause, isPaused }: GameCanvas
           avgTime: 0,
         });
       }
+    } else {
+      // Fallback to prevent black screen
+      resultsRef.current = {
+        distance: engineRef.current?.getDistance() || 0,
+        shards: 0,
+        correct: 0,
+        attempted: 0,
+        rocksDestroyed: 0,
+        bossesDefeated: 0,
+      };
     }
 
     engineRef.current?.stop();
