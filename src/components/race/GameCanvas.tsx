@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { Profile, Gate, MathProblem, PowerupType } from '@/types';
 import { RaceEngine } from '@/engines/RaceEngine';
 import { useGameStore } from '@/stores/gameStore';
+import { SoundEngine } from '@/engines/SoundEngine';
 import { HUD } from './HUD';
 import { GateOverlay } from './GateOverlay';
 import { ProgressionEngine } from '@/engines/ProgressionEngine';
@@ -101,9 +102,11 @@ export function GameCanvas({ profile, onEndRace, onPause, isPaused }: GameCanvas
       {
         onShardCollect: (amount) => {
           collectShards(amount);
+          SoundEngine.collect();
         },
         onObstacleHit: () => {
           const shouldRespawn = hitObstacle();
+          SoundEngine.hit();
           if (shouldRespawn) {
             engineRef.current?.triggerRespawn();
             setRespawnFlash(true);
@@ -135,6 +138,7 @@ export function GameCanvas({ profile, onEndRace, onPause, isPaused }: GameCanvas
         onRespawn: () => {},
         onBossSpawn: () => {
           setBossActive(true);
+          SoundEngine.bossShoot();
         },
         onBossMathPhase: (problem) => {
           // Pause engine for boss math challenge
@@ -144,13 +148,18 @@ export function GameCanvas({ profile, onEndRace, onPause, isPaused }: GameCanvas
         onBossDefeated: () => {
           defeatBoss();
           setBossActive(false);
+          SoundEngine.bossDefeat();
         },
         onRockDestroyed: () => {
           destroyRock();
+          SoundEngine.explode();
         },
         onStageClear: () => {
           setStageClear(true);
-          // Auto-end race with stage clear bonus
+          SoundEngine.stageComplete();
+          // Stop engine first to prevent further updates
+          engineRef.current?.stop();
+          // Capture results BEFORE endRace clears currentRun
           const run = useGameStore.getState().currentRun;
           if (run) {
             collectShards(50); // Stage completion bonus
@@ -170,12 +179,22 @@ export function GameCanvas({ profile, onEndRace, onPause, isPaused }: GameCanvas
                 avgTime: 0,
               });
             }
+            endRace();
+          } else {
+            // Fallback: capture from engine distance
+            resultsRef.current = {
+              distance: engineRef.current?.getDistance() || 0,
+              shards: 50,
+              correct: 0,
+              attempted: 0,
+              rocksDestroyed: 0,
+              bossesDefeated: 0,
+            };
           }
-          engineRef.current?.stop();
-          endRace();
           setShowResults(true);
         },
         onPowerupCollect: (type: PowerupType) => {
+          SoundEngine.powerup();
           if (type === 'boost') {
             activateBoost();
             setPowerupMessage('SPEED BOOST!');
@@ -223,6 +242,7 @@ export function GameCanvas({ profile, onEndRace, onPause, isPaused }: GameCanvas
 
   const handleGateSolve = useCallback(
     (correct: boolean) => {
+      SoundEngine.gateSolve(correct);
       if (activeGate && engineRef.current) {
         engineRef.current.setGateResult(activeGate.id, correct);
         const isYoung = profile.age <= 8;
@@ -251,6 +271,7 @@ export function GameCanvas({ profile, onEndRace, onPause, isPaused }: GameCanvas
 
   const handleBossMathSolve = useCallback(
     (correct: boolean) => {
+      SoundEngine.gateSolve(correct);
       if (engineRef.current) {
         engineRef.current.setBossMathResult(correct);
         if (correct) {
@@ -508,7 +529,7 @@ export function GameCanvas({ profile, onEndRace, onPause, isPaused }: GameCanvas
                       <path d="M5 9l4 4 4-4M15 5l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </div>
-                  <span className="text-white/80 text-sm font-medium">Drag or Arrow Keys to move</span>
+                  <span className="text-white/80 text-sm font-medium">Joystick or Arrow Keys to move</span>
                 </div>
                 <div className="flex items-center justify-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-yellow-500/20 border border-yellow-500/30 flex items-center justify-center">
