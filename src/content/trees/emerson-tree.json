@@ -1,194 +1,31 @@
 {
   "profile": "emerson",
   "nodes": [
-    {
-      "id": "speed-1",
-      "cost": 40,
-      "type": "stat",
-      "stat": "speed",
-      "value": 1.1,
-      "visual": "add-wings-blue",
-      "name": "Speed Boost I",
-      "description": "Your ship moves 10% faster!"
-    },
-    {
-      "id": "color-blue",
-      "cost": 30,
-      "type": "cosmetic",
-      "effect": "#00D9FF",
-      "visual": "paint-ship",
-      "name": "Blue Paint",
-      "description": "Paint your ship bright blue!"
-    },
-    {
-      "id": "shield-1",
-      "cost": 60,
-      "type": "stat",
-      "stat": "shield",
-      "value": 4,
-      "visual": "add-shield",
-      "name": "Extra Shield",
-      "description": "You can take 4 hits instead of 3!"
-    },
-    {
-      "id": "trail-sparkle",
-      "cost": 50,
-      "type": "cosmetic",
-      "effect": "sparkle",
-      "visual": "add-trail",
-      "name": "Sparkle Trail",
-      "description": "Leave a trail of sparkles behind you!"
-    },
-    {
-      "id": "speed-2",
-      "cost": 80,
-      "type": "stat",
-      "stat": "speed",
-      "value": 1.2,
-      "visual": "add-wings-gold",
-      "name": "Speed Boost II",
-      "description": "Your ship moves 20% faster!"
-    },
-    {
-      "id": "milestone-sapphire",
-      "cost": 100,
-      "type": "milestone",
-      "effect": "sapphire-caverns",
-      "visual": "unlock-track",
-      "name": "Sapphire Caverns",
-      "description": "Unlock a new track to race on!"
-    },
-    {
-      "id": "color-green",
-      "cost": 45,
-      "type": "cosmetic",
-      "effect": "#00FF88",
-      "visual": "paint-ship",
-      "name": "Green Paint",
-      "description": "Paint your ship emerald green!"
-    },
-    {
-      "id": "boost-1",
-      "cost": 70,
-      "type": "stat",
-      "stat": "boostDuration",
-      "value": 4,
-      "visual": "add-boost",
-      "name": "Longer Boost",
-      "description": "Your speed boost lasts 4 seconds!"
-    },
-    {
-      "id": "ship-shape-2",
-      "cost": 55,
-      "type": "cosmetic",
-      "effect": "arrow",
-      "visual": "change-shape",
-      "name": "Arrow Ship",
-      "description": "Change your ship to an arrow shape!"
-    },
-    {
-      "id": "speed-3",
-      "cost": 120,
-      "type": "stat",
-      "stat": "speed",
-      "value": 1.3,
-      "visual": "add-wings-rainbow",
-      "name": "Speed Boost III",
-      "description": "Your ship moves 30% faster!"
-    },
-    {
-      "id": "color-gold",
-      "cost": 80,
-      "type": "cosmetic",
-      "effect": "#FFD700",
-      "visual": "paint-ship",
-      "name": "Gold Paint",
-      "description": "Paint your ship shiny gold!"
-    },
-    {
-      "id": "shield-2",
-      "cost": 100,
-      "type": "stat",
-      "stat": "shield",
-      "value": 5,
-      "visual": "add-shield-gold",
-      "name": "Super Shield",
-      "description": "You can take 5 hits instead of 4!"
-    },
-    {
-      "id": "trail-fire",
-      "cost": 90,
-      "type": "cosmetic",
-      "effect": "fire",
-      "visual": "add-trail",
-      "name": "Fire Trail",
-      "description": "Leave a trail of fire behind you!"
-    },
-    {
-      "id": "boost-2",
-      "cost": 110,
-      "type": "stat",
-      "stat": "boostDuration",
-      "value": 5,
-      "visual": "add-boost-gold",
-      "name": "Super Boost",
-      "description": "Your speed boost lasts 5 seconds!"
-    },
-    {
-      "id": "ship-shape-3",
-      "cost": 75,
-      "type": "cosmetic",
-      "effect": "diamond",
-      "visual": "change-shape",
-      "name": "Diamond Ship",
-      "description": "Change your ship to a diamond shape!"
-    },
-    {
-      "id": "color-purple",
-      "cost": 85,
-      "type": "cosmetic",
-      "effect": "#9D00FF",
-      "visual": "paint-ship",
-      "name": "Purple Paint",
-      "description": "Paint your ship royal purple!"
-    },
-    {
-      "id": "speed-4",
-      "cost": 150,
-      "type": "stat",
-      "stat": "speed",
-      "value": 1.4,
-      "visual": "add-wings-crystal",
-      "name": "Crystal Speed",
-      "description": "Your ship moves 40% faster!"
-    },
-    {
-      "id": "trail-rainbow",
-      "cost": 120,
-      "type": "cosmetic",
-      "effect": "rainbow",
-      "visual": "add-trail",
-      "name": "Rainbow Trail",
-      "description": "Leave a rainbow trail behind you!"
-    },
-    {
-      "id": "shield-3",
-      "cost": 140,
-      "type": "stat",
-      "stat": "shield",
-      "value": 6,
-      "visual": "add-shield-crystal",
-      "name": "Crystal Shield",
-      "description": "You can take 6 hits!"
-    },
-    {
-      "id": "ship-shape-4",
-      "cost": 200,
-      "type": "cosmetic",
-      "effect": "crystal",
-      "visual": "change-shape",
-      "name": "Crystal Ship",
-      "description": "The ultimate crystal ship shape!"
-    }
+    { "id": "speed-1",          "branch": "stats",  "cost": 40,  "type": "stat",      "stat": "speed",         "value": 1.1, "visual": "stat-speed",  "name": "Speed Boost I",    "description": "Your ship moves 10% faster!" },
+    { "id": "shield-1",         "branch": "stats",  "cost": 60,  "type": "stat",      "stat": "shield",        "value": 4,   "visual": "stat-shield", "name": "Extra Shield",     "description": "You can take 4 hits instead of 3!" },
+    { "id": "boost-1",          "branch": "stats",  "cost": 70,  "type": "stat",      "stat": "boostDuration", "value": 4,   "visual": "stat-boost",  "name": "Longer Boost",     "description": "Your speed boost lasts 4 seconds!" },
+    { "id": "speed-2",          "branch": "stats",  "cost": 80,  "type": "stat",      "stat": "speed",         "value": 1.2, "visual": "stat-speed",  "name": "Speed Boost II",   "description": "Your ship moves 20% faster!" },
+    { "id": "milestone-sapphire","branch": "stats",  "cost": 100, "type": "milestone", "effect": "sapphire-caverns", "visual": "unlock-track", "name": "Sapphire Caverns", "description": "Unlock a new track to race on!" },
+    { "id": "shield-2",         "branch": "stats",  "cost": 100, "type": "stat",      "stat": "shield",        "value": 5,   "visual": "stat-shield", "name": "Super Shield",     "description": "You can take 5 hits instead of 4!" },
+    { "id": "boost-2",          "branch": "stats",  "cost": 110, "type": "stat",      "stat": "boostDuration", "value": 5,   "visual": "stat-boost",  "name": "Super Boost",      "description": "Your speed boost lasts 5 seconds!" },
+    { "id": "speed-3",          "branch": "stats",  "cost": 120, "type": "stat",      "stat": "speed",         "value": 1.3, "visual": "stat-speed",  "name": "Speed Boost III",  "description": "Your ship moves 30% faster!" },
+    { "id": "shield-3",         "branch": "stats",  "cost": 140, "type": "stat",      "stat": "shield",        "value": 6,   "visual": "stat-shield", "name": "Crystal Shield",   "description": "You can take 6 hits!" },
+    { "id": "speed-4",          "branch": "stats",  "cost": 150, "type": "stat",      "stat": "speed",         "value": 1.4, "visual": "stat-speed",  "name": "Crystal Speed",    "description": "Your ship moves 40% faster!" },
+
+    { "id": "color-blue",   "branch": "colors", "cost": 30,  "type": "cosmetic", "effect": "#00D9FF", "visual": "paint-ship", "name": "Ocean Blue",   "description": "A cool ocean blue paint job!" },
+    { "id": "color-green",  "branch": "colors", "cost": 45,  "type": "cosmetic", "effect": "#00FF88", "visual": "paint-ship", "name": "Lime Green",   "description": "A bright lime green paint job!" },
+    { "id": "color-gold",   "branch": "colors", "cost": 80,  "type": "cosmetic", "effect": "#FFD700", "visual": "paint-ship", "name": "Shiny Gold",   "description": "A shiny gold paint job!" },
+    { "id": "color-purple", "branch": "colors", "cost": 85,  "type": "cosmetic", "effect": "#9D00FF", "visual": "paint-ship", "name": "Royal Purple", "description": "A royal purple paint job!" },
+    { "id": "color-pink",   "branch": "colors", "cost": 90,  "type": "cosmetic", "effect": "#FF69B4", "visual": "paint-ship", "name": "Hot Pink",     "description": "A sizzling hot pink!" },
+    { "id": "color-red",    "branch": "colors", "cost": 100, "type": "cosmetic", "effect": "#FF3333", "visual": "paint-ship", "name": "Blazing Red",  "description": "A blazing red paint job!" },
+
+    { "id": "trail-sparkle", "branch": "trails", "cost": 50,  "type": "cosmetic", "effect": "sparkle", "visual": "add-trail", "name": "Sparkle Trail", "description": "Leave a trail of glittery sparkles!" },
+    { "id": "trail-fire",    "branch": "trails", "cost": 90,  "type": "cosmetic", "effect": "fire",    "visual": "add-trail", "name": "Fire Trail",    "description": "Leave a blazing fire trail!" },
+    { "id": "trail-rainbow", "branch": "trails", "cost": 120, "type": "cosmetic", "effect": "rainbow", "visual": "add-trail", "name": "Rainbow Trail", "description": "Leave a rainbow trail behind you!" },
+
+    { "id": "ship-rocket",    "branch": "shapes", "cost": 55,  "type": "cosmetic", "effect": "rocket",    "visual": "change-shape", "name": "Rocket Ship", "description": "Zoom around in a classic rocket!" },
+    { "id": "ship-ufo",       "branch": "shapes", "cost": 75,  "type": "cosmetic", "effect": "ufo",       "visual": "change-shape", "name": "UFO",         "description": "A mysterious flying saucer!" },
+    { "id": "ship-star",      "branch": "shapes", "cost": 110, "type": "cosmetic", "effect": "star",      "visual": "change-shape", "name": "Star Ship",   "description": "A shining 5-pointed star!" },
+    { "id": "ship-crazy-cat", "branch": "shapes", "cost": 200, "type": "cosmetic", "effect": "crazy-cat", "visual": "change-shape", "name": "Crazy Cat",   "description": "A super silly cat spaceship — meow! 🐱" }
   ]
 }

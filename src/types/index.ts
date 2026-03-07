@@ -13,7 +13,8 @@ export interface Profile {
   age: number;
   competency: CompetencyLevel;
   shards: number;
-  treeIndex: number;
+  /** Per-branch unlock progress (replaces the old flat treeIndex). */
+  branchProgress: { stats: number; colors: number; trails: number; shapes: number };
   unlockedNodes: string[];
   difficulty: number;
   stats: {
@@ -21,10 +22,17 @@ export interface Profile {
     shield: number;
     boostDuration: number;
   };
+  /** The currently equipped cosmetics. */
   cosmetics: {
     color: string;
     trail: string;
     shipShape: string;
+  };
+  /** Every cosmetic the player has ever purchased, indexed by category. */
+  ownedCosmetics: {
+    colors: string[];
+    trails: string[];
+    shapes: string[];
   };
   preferences: {
     steering: SteeringMode;
@@ -80,6 +88,8 @@ export interface TechTreeNode {
   id: string;
   cost: number;
   type: NodeType;
+  /** Which branch this node belongs to: 'stats' | 'colors' | 'trails' | 'shapes' */
+  branch: string;
   stat?: string;
   value?: number;
   effect?: string;

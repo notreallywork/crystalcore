@@ -316,6 +316,25 @@ export class RaceEngine {
       return particle.life > 0;
     });
 
+    // Sparkle trail particles (spawned here so they exist in world-space)
+    if (this.profile.cosmetics.trail === 'sparkle') {
+      const shipY = CANVAS_HEIGHT * SHIP_Y_PERCENT;
+      if (Math.random() < 0.4) {
+        const sparkColors = ['#FFFFFF', '#AADDFF', '#FFDDFF', '#FFFF88'];
+        this.particles.push({
+          id: `sparkle-${Date.now()}-${Math.random()}`,
+          x: this.ship.x + (Math.random() - 0.5) * SHIP_WIDTH * 0.5,
+          y: shipY + SHIP_HEIGHT * 0.35 + Math.random() * 10,
+          vx: (Math.random() - 0.5) * 30,
+          vy: 20 + Math.random() * 60,
+          life: 0.4 + Math.random() * 0.4,
+          maxLife: 0.8,
+          color: sparkColors[Math.floor(Math.random() * sparkColors.length)],
+          size: 1.5 + Math.random() * 2.5,
+        });
+      }
+    }
+
     // Check checkpoint
     if (this.distance - this.lastCheckpoint >= CHECKPOINT_DISTANCE) {
       this.lastCheckpoint = this.distance;
@@ -598,6 +617,8 @@ export class RaceEngine {
   private renderShip() {
     const ctx = this.ctx;
     const shipY = CANVAS_HEIGHT * SHIP_Y_PERCENT;
+    const W = SHIP_WIDTH;
+    const H = SHIP_HEIGHT;
 
     // Respawn flash (blink effect)
     if (this.isInvincible && Math.floor(this.respawnFlashTimer * 8) % 2 === 0) {
@@ -610,68 +631,299 @@ export class RaceEngine {
     // Ship glow
     ctx.shadowColor = this.profile.cosmetics.color;
     ctx.shadowBlur = this.isBoosting ? 25 : 12;
-
     ctx.fillStyle = this.profile.cosmetics.color;
-    ctx.strokeStyle = '#FFF';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.lineWidth = 1.5;
 
     switch (this.profile.cosmetics.shipShape) {
-      case 'arrow':
+      // ── Default shuttle: slightly rounded body with swept fins ──────────────
+      case 'default':
+      default: {
         ctx.beginPath();
-        ctx.moveTo(0, -SHIP_HEIGHT / 2);
-        ctx.lineTo(SHIP_WIDTH / 2, SHIP_HEIGHT / 2);
-        ctx.lineTo(0, SHIP_HEIGHT / 4);
-        ctx.lineTo(-SHIP_WIDTH / 2, SHIP_HEIGHT / 2);
+        ctx.moveTo(0, -H / 2);
+        ctx.lineTo(W * 0.3, -H * 0.1);
+        ctx.lineTo(W * 0.5, H * 0.4);
+        ctx.lineTo(W * 0.25, H * 0.2);
+        ctx.lineTo(0, H * 0.45);
+        ctx.lineTo(-W * 0.25, H * 0.2);
+        ctx.lineTo(-W * 0.5, H * 0.4);
+        ctx.lineTo(-W * 0.3, -H * 0.1);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
         break;
+      }
 
-      case 'diamond':
+      // ── Diamond ─────────────────────────────────────────────────────────────
+      case 'diamond': {
         ctx.beginPath();
-        ctx.moveTo(0, -SHIP_HEIGHT / 2);
-        ctx.lineTo(SHIP_WIDTH / 2, 0);
-        ctx.lineTo(0, SHIP_HEIGHT / 2);
-        ctx.lineTo(-SHIP_WIDTH / 2, 0);
+        ctx.moveTo(0, -H / 2);
+        ctx.lineTo(W / 2, 0);
+        ctx.lineTo(0, H / 2);
+        ctx.lineTo(-W / 2, 0);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
         break;
+      }
 
-      default:
+      // ── Rocket: narrow body + side fins ─────────────────────────────────────
+      case 'rocket': {
         ctx.beginPath();
-        ctx.moveTo(0, -SHIP_HEIGHT / 2);
-        ctx.lineTo(SHIP_WIDTH / 2, SHIP_HEIGHT / 2);
-        ctx.lineTo(0, SHIP_HEIGHT / 4);
-        ctx.lineTo(-SHIP_WIDTH / 2, SHIP_HEIGHT / 2);
+        ctx.moveTo(0, -H / 2);
+        ctx.lineTo(W * 0.2, -H * 0.15);
+        ctx.lineTo(W * 0.2, H * 0.25);
+        ctx.lineTo(W * 0.5, H * 0.5);
+        ctx.lineTo(W * 0.2, H * 0.3);
+        ctx.lineTo(-W * 0.2, H * 0.3);
+        ctx.lineTo(-W * 0.5, H * 0.5);
+        ctx.lineTo(-W * 0.2, H * 0.25);
+        ctx.lineTo(-W * 0.2, -H * 0.15);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
+        // Nose window
+        ctx.globalAlpha = 0.4;
+        ctx.fillStyle = '#FFF';
+        ctx.beginPath();
+        ctx.ellipse(0, -H * 0.28, W * 0.1, H * 0.08, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = this.profile.cosmetics.color;
+        break;
+      }
+
+      // ── UFO: saucer shape ────────────────────────────────────────────────────
+      case 'ufo': {
+        // Lower saucer body
+        ctx.beginPath();
+        ctx.ellipse(0, H * 0.1, W * 0.5, H * 0.22, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // Upper dome
+        ctx.beginPath();
+        ctx.ellipse(0, -H * 0.05, W * 0.3, H * 0.25, 0, Math.PI, 0);
+        ctx.fill();
+        ctx.stroke();
+        // Dome window
+        ctx.globalAlpha = 0.4;
+        ctx.fillStyle = '#00FFFF';
+        ctx.beginPath();
+        ctx.ellipse(0, -H * 0.12, W * 0.14, H * 0.1, 0, Math.PI, 0);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = this.profile.cosmetics.color;
+        break;
+      }
+
+      // ── 5-pointed Star ───────────────────────────────────────────────────────
+      case 'star': {
+        const outerR = H / 2;
+        const innerR = H / 4.5;
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const outerA = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+          const innerA = outerA + (2 * Math.PI) / 10;
+          if (i === 0) ctx.moveTo(Math.cos(outerA) * outerR, Math.sin(outerA) * outerR);
+          else ctx.lineTo(Math.cos(outerA) * outerR, Math.sin(outerA) * outerR);
+          ctx.lineTo(Math.cos(innerA) * innerR, Math.sin(innerA) * innerR);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
+
+      // ── Crazy Cat: round body + triangle ears + whiskers ────────────────────
+      case 'crazy-cat': {
+        // Body
+        ctx.beginPath();
+        ctx.ellipse(0, H * 0.1, W * 0.42, H * 0.36, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // Left ear
+        ctx.beginPath();
+        ctx.moveTo(-W * 0.3, -H * 0.05);
+        ctx.lineTo(-W * 0.48, -H * 0.46);
+        ctx.lineTo(-W * 0.1, -H * 0.22);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Right ear
+        ctx.beginPath();
+        ctx.moveTo(W * 0.3, -H * 0.05);
+        ctx.lineTo(W * 0.48, -H * 0.46);
+        ctx.lineTo(W * 0.1, -H * 0.22);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Eyes (white dots)
+        ctx.fillStyle = '#FFF';
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.arc(-W * 0.15, H * 0.02, 4, 0, Math.PI * 2);
+        ctx.arc(W * 0.15, H * 0.02, 4, 0, Math.PI * 2);
+        ctx.fill();
+        // Pupils
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(-W * 0.15, H * 0.04, 2, 0, Math.PI * 2);
+        ctx.arc(W * 0.15, H * 0.04, 2, 0, Math.PI * 2);
+        ctx.fill();
+        // Whiskers
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+        ctx.lineWidth = 1;
+        ctx.shadowBlur = 0;
+        [[-1, -1], [-1, 0], [-1, 1], [1, -1], [1, 0], [1, 1]].forEach(([side, slope]) => {
+          const sx = side * W * 0.12;
+          const ex = side * W * 0.46;
+          const ey = H * 0.16 + slope * 5;
+          ctx.beginPath();
+          ctx.moveTo(sx, H * 0.16);
+          ctx.lineTo(ex, ey);
+          ctx.stroke();
+        });
+        ctx.fillStyle = this.profile.cosmetics.color;
+        ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+        ctx.lineWidth = 1.5;
+        ctx.shadowBlur = this.isBoosting ? 25 : 12;
+        break;
+      }
+
+      // ── Stealth: flat swept-wing delta ───────────────────────────────────────
+      case 'stealth': {
+        ctx.beginPath();
+        ctx.moveTo(0, -H / 2);
+        ctx.lineTo(W * 0.55, H * 0.2);
+        ctx.lineTo(W * 0.35, H * 0.5);
+        ctx.lineTo(0, H * 0.25);
+        ctx.lineTo(-W * 0.35, H * 0.5);
+        ctx.lineTo(-W * 0.55, H * 0.2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
+
+      // ── Phantom: broad triangular delta ─────────────────────────────────────
+      case 'phantom': {
+        ctx.beginPath();
+        ctx.moveTo(0, -H / 2);
+        ctx.lineTo(W * 0.65, H / 2);
+        ctx.lineTo(0, H * 0.2);
+        ctx.lineTo(-W * 0.65, H / 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
+
+      // ── Dragon: spiky silhouette ─────────────────────────────────────────────
+      case 'dragon': {
+        ctx.beginPath();
+        ctx.moveTo(0, -H / 2);
+        ctx.lineTo(W * 0.2, -H * 0.3);
+        ctx.lineTo(W * 0.38, -H * 0.48);
+        ctx.lineTo(W * 0.28, -H * 0.18);
+        ctx.lineTo(W * 0.5, H * 0.15);
+        ctx.lineTo(W * 0.28, H * 0.45);
+        ctx.lineTo(0, H * 0.28);
+        ctx.lineTo(-W * 0.28, H * 0.45);
+        ctx.lineTo(-W * 0.5, H * 0.15);
+        ctx.lineTo(-W * 0.28, -H * 0.18);
+        ctx.lineTo(-W * 0.38, -H * 0.48);
+        ctx.lineTo(-W * 0.2, -H * 0.3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
+
+      // ── Ninja: 4-pointed shuriken ────────────────────────────────────────────
+      case 'ninja': {
+        const nr = H / 2;
+        const nir = H * 0.18;
+        ctx.beginPath();
+        for (let i = 0; i < 4; i++) {
+          const outerA = (i * Math.PI) / 2 - Math.PI / 2;
+          const innerA = outerA + Math.PI / 4;
+          if (i === 0) ctx.moveTo(Math.cos(outerA) * nr, Math.sin(outerA) * nr);
+          else ctx.lineTo(Math.cos(outerA) * nr, Math.sin(outerA) * nr);
+          ctx.lineTo(Math.cos(innerA) * nir, Math.sin(innerA) * nir);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
     }
 
-    // Draw trail
-    if (this.profile.cosmetics.trail !== 'none') {
-      ctx.globalAlpha = 0.5;
-      const trailGradient = ctx.createLinearGradient(0, SHIP_HEIGHT / 4, 0, SHIP_HEIGHT / 2 + 40);
-      trailGradient.addColorStop(0, this.profile.cosmetics.color);
-      trailGradient.addColorStop(1, 'transparent');
-      ctx.fillStyle = trailGradient;
+    // ── Trail ──────────────────────────────────────────────────────────────────
+    const trail = this.profile.cosmetics.trail;
+    if (trail !== 'none') {
+      const ty0 = H * 0.2;
+      const ty1 = H * 0.5 + 45;
+      const gradient = ctx.createLinearGradient(0, ty0, 0, ty1);
+
+      switch (trail) {
+        case 'fire':
+          gradient.addColorStop(0, '#FF6600');
+          gradient.addColorStop(0.5, '#FF2200');
+          gradient.addColorStop(1, 'transparent');
+          break;
+        case 'rainbow':
+          gradient.addColorStop(0,    '#FF0000');
+          gradient.addColorStop(0.17, '#FF8800');
+          gradient.addColorStop(0.33, '#FFFF00');
+          gradient.addColorStop(0.5,  '#00FF00');
+          gradient.addColorStop(0.67, '#0088FF');
+          gradient.addColorStop(0.83, '#8800FF');
+          gradient.addColorStop(1,    'transparent');
+          break;
+        case 'electric':
+          gradient.addColorStop(0, '#00FFFF');
+          gradient.addColorStop(0.5, '#AAFFFF');
+          gradient.addColorStop(1, 'transparent');
+          break;
+        case 'void':
+          gradient.addColorStop(0, '#6600AA');
+          gradient.addColorStop(0.5, '#220044');
+          gradient.addColorStop(1, 'transparent');
+          break;
+        case 'nebula':
+          gradient.addColorStop(0, '#FF00CC');
+          gradient.addColorStop(0.5, '#8800FF');
+          gradient.addColorStop(1, 'transparent');
+          break;
+        case 'sparkle':
+        default:
+          gradient.addColorStop(0, '#FFFFFF');
+          gradient.addColorStop(0.4, '#AADDFF');
+          gradient.addColorStop(1, 'transparent');
+          break;
+      }
+
+      ctx.globalAlpha = 0.55;
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = gradient;
       ctx.beginPath();
-      ctx.moveTo(-SHIP_WIDTH / 3, SHIP_HEIGHT / 4);
-      ctx.lineTo(0, SHIP_HEIGHT / 2 + 40);
-      ctx.lineTo(SHIP_WIDTH / 3, SHIP_HEIGHT / 4);
+      ctx.moveTo(-W * 0.28, ty0);
+      ctx.lineTo(0, ty1);
+      ctx.lineTo(W * 0.28, ty0);
       ctx.closePath();
       ctx.fill();
+      ctx.globalAlpha = 1;
     }
 
-    // Engine glow
+    // ── Engine glow ────────────────────────────────────────────────────────────
     ctx.globalAlpha = 0.9;
-    const engineGlow = ctx.createRadialGradient(0, SHIP_HEIGHT / 2 + 5, 2, 0, SHIP_HEIGHT / 2 + 5, 12);
+    const engineGlow = ctx.createRadialGradient(0, H / 2 + 5, 2, 0, H / 2 + 5, 12);
     engineGlow.addColorStop(0, this.isBoosting ? '#00FFFF' : '#00D9FF');
     engineGlow.addColorStop(1, 'transparent');
     ctx.fillStyle = engineGlow;
+    ctx.shadowBlur = 0;
     ctx.beginPath();
-    ctx.arc(0, SHIP_HEIGHT / 2 + 5, 12, 0, Math.PI * 2);
+    ctx.arc(0, H / 2 + 5, 12, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
