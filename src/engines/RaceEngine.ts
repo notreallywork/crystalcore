@@ -680,7 +680,10 @@ export class RaceEngine {
   // Public methods for external control
   setGateResult(gateId: string, correct: boolean) {
     const gate = this.gates.find((g) => g.id === gateId);
-    if (gate) {
+    // Only act if the gate hasn't already been resolved by the auto-fail logic.
+    // Without this guard, onGatePass fires twice when the player submits an
+    // answer during the same frame that the gate scrolls past the ship.
+    if (gate && gate.solved === null) {
       gate.solved = correct;
       this.callbacks.onGatePass(correct);
 

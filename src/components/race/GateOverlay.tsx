@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Profile, MathProblem, Gate } from '@/types';
 import { MathValidator } from '@/engines/MathValidator';
@@ -35,27 +35,31 @@ export function GateOverlay({ gate, profile, onSolve, onSkip }: GateOverlayProps
     setTimeLeft(solveTime);
   }, [gate.id]);
 
+  // Pure countdown — no side effects inside the updater
   useEffect(() => {
     if (solved !== null) return;
 
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 0.1) {
-          handleTimeout();
-          return 0;
-        }
-        return prev - 0.1;
-      });
+      setTimeLeft((prev) => Math.max(0, prev - 0.1));
     }, 100);
 
     return () => clearInterval(timer);
   }, [solved]);
 
-  const handleTimeout = useCallback(() => {
-    if (solved === null) {
+  // Detect timeout: when the clock hits zero before an answer is submitted
+  useEffect(() => {
+    if (solved === null && timeLeft <= 0) {
       setSolved(false);
-      setTimeout(() => onSolve(false), 800);
     }
+  }, [solved, timeLeft]);
+
+  // After any answer (correct or wrong), call onSolve once with a short delay
+  // for feedback visibility. Using an effect (not a setTimeout in a handler)
+  // ensures there is exactly one scheduled call and it is cancelled on unmount.
+  useEffect(() => {
+    if (solved === null) return;
+    const timer = setTimeout(() => onSolve(solved), 800);
+    return () => clearTimeout(timer);
   }, [solved, onSolve]);
 
   const handleNumpadInput = (digit: string) => {
@@ -78,7 +82,7 @@ export function GateOverlay({ gate, profile, onSolve, onSkip }: GateOverlayProps
     const isCorrect = MathValidator.validateAnswer(problem, numAnswer);
 
     setSolved(isCorrect);
-    setTimeout(() => onSolve(isCorrect), 800);
+    // onSolve is called automatically by the solved-watcher effect above
   };
 
   const handleDragStart = (count: number) => {
@@ -91,7 +95,7 @@ export function GateOverlay({ gate, profile, onSolve, onSkip }: GateOverlayProps
 
     const isCorrect = MathValidator.validateAnswer(problem, draggedCrystals);
     setSolved(isCorrect);
-    setTimeout(() => onSolve(isCorrect), 800);
+    // onSolve is called automatically by the solved-watcher effect above
   };
 
   const progress = (timeLeft / solveTime) * 100;
