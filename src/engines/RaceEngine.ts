@@ -494,7 +494,60 @@ export class RaceEngine {
       this.spawnBoss();
     }
 
+<<<<<<< HEAD
     // Checkpoint
+=======
+      return obstacle.y < CANVAS_HEIGHT + 50;
+    });
+
+    // Update gates
+    this.gates = this.gates.filter((gate) => {
+      gate.y += scrollSpeed * deltaTime;
+
+      // Gate approach: only trigger ONCE using the approached flag
+      if (!gate.approached && gate.y > CANVAS_HEIGHT * 0.2 && gate.y < CANVAS_HEIGHT * 0.5) {
+        gate.approached = true;
+        this.callbacks.onGateApproach(gate);
+      }
+
+      // Gate pass: check if ship has passed below the gate (compare Y positions)
+      if (gate.y > shipY + SHIP_HEIGHT / 2 && gate.solved === null) {
+        gate.solved = false;
+        this.callbacks.onGatePass(false);
+      }
+
+      return gate.y < CANVAS_HEIGHT + 200;
+    });
+
+    // Update particles
+    this.particles = this.particles.filter((particle) => {
+      particle.x += particle.vx * deltaTime;
+      particle.y += particle.vy * deltaTime;
+      particle.life -= deltaTime;
+      return particle.life > 0;
+    });
+
+    // Sparkle trail particles (spawned here so they exist in world-space)
+    if (this.profile.cosmetics.trail === 'sparkle') {
+      const shipY = CANVAS_HEIGHT * SHIP_Y_PERCENT;
+      if (Math.random() < 0.4) {
+        const sparkColors = ['#FFFFFF', '#AADDFF', '#FFDDFF', '#FFFF88'];
+        this.particles.push({
+          id: `sparkle-${Date.now()}-${Math.random()}`,
+          x: this.ship.x + (Math.random() - 0.5) * SHIP_WIDTH * 0.5,
+          y: shipY + SHIP_HEIGHT * 0.35 + Math.random() * 10,
+          vx: (Math.random() - 0.5) * 30,
+          vy: 20 + Math.random() * 60,
+          life: 0.4 + Math.random() * 0.4,
+          maxLife: 0.8,
+          color: sparkColors[Math.floor(Math.random() * sparkColors.length)],
+          size: 1.5 + Math.random() * 2.5,
+        });
+      }
+    }
+
+    // Check checkpoint
+>>>>>>> origin/claude/fix-wrong-answer-hang-kEK8Y
     if (this.distance - this.lastCheckpoint >= CHECKPOINT_DISTANCE) {
       this.lastCheckpoint = this.distance;
       this.callbacks.onCheckpoint();
@@ -2035,6 +2088,562 @@ export class RaceEngine {
     this.callbacks.onRespawn();
   }
 
+<<<<<<< HEAD
+=======
+  private spawnHitParticles(x: number, y: number) {
+    for (let i = 0; i < 12; i++) {
+      const angle = (Math.PI * 2 * i) / 12;
+      const speed = 100 + Math.random() * 120;
+      this.particles.push({
+        id: `hit-${Date.now()}-${i}`,
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 0.6,
+        maxLife: 0.6,
+        color: '#FF3366',
+        size: 3 + Math.random() * 5,
+      });
+    }
+  }
+
+  spawnShardParticles(x: number, y: number) {
+    for (let i = 0; i < 10; i++) {
+      const angle = (Math.PI * 2 * i) / 10;
+      const speed = 80 + Math.random() * 100;
+      this.particles.push({
+        id: `shard-${Date.now()}-${i}`,
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 50,
+        life: 1.0,
+        maxLife: 1.0,
+        color: '#FFD700',
+        size: 5 + Math.random() * 5,
+      });
+    }
+  }
+
+  spawnBoostParticles() {
+    const shipY = CANVAS_HEIGHT * SHIP_Y_PERCENT;
+    for (let i = 0; i < 6; i++) {
+      this.particles.push({
+        id: `boost-${Date.now()}-${i}`,
+        x: this.ship.x + (Math.random() - 0.5) * SHIP_WIDTH,
+        y: shipY + SHIP_HEIGHT / 2,
+        vx: (Math.random() - 0.5) * 40,
+        vy: 60 + Math.random() * 80,
+        life: 0.4,
+        maxLife: 0.4,
+        color: '#00D9FF',
+        size: 3 + Math.random() * 4,
+      });
+    }
+  }
+
+  private render() {
+    const ctx = this.ctx;
+
+    // Clear and draw background
+    ctx.fillStyle = this.track.theme.bgColor;
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    // Draw star field
+    for (const star of this.starField) {
+      ctx.fillStyle = `rgba(255, 255, 255, ${0.2 + star.size * 0.2})`;
+      ctx.beginPath();
+      ctx.arc(star.x, star.y, star.size * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Draw lane dividers with glow
+    ctx.save();
+    for (let i = 1; i < 3; i++) {
+      const x = (CANVAS_WIDTH / 3) * i;
+      ctx.strokeStyle = this.track.theme.gridColor;
+      ctx.lineWidth = 1;
+      ctx.shadowColor = this.track.theme.gridColor;
+      ctx.shadowBlur = 8;
+      ctx.setLineDash([20, 15]);
+      ctx.lineDashOffset = -this.gridOffset * 3;
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, CANVAS_HEIGHT);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Draw scrolling grid lines (horizontal)
+    ctx.save();
+    ctx.strokeStyle = this.track.theme.gridColor;
+    ctx.lineWidth = 0.5;
+    ctx.globalAlpha = 0.3;
+    for (let y = -100 + this.gridOffset; y < CANVAS_HEIGHT; y += 100) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(CANVAS_WIDTH, y);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Draw obstacles
+    this.obstacles.forEach((obstacle) => {
+      ctx.save();
+      ctx.translate(obstacle.x, obstacle.y);
+
+      if (obstacle.type === 'crystal') {
+        ctx.fillStyle = this.track.theme.crystalColor;
+        ctx.shadowColor = this.track.theme.crystalColor;
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.moveTo(0, -obstacle.height / 2);
+        ctx.lineTo(obstacle.width / 2, 0);
+        ctx.lineTo(0, obstacle.height / 2);
+        ctx.lineTo(-obstacle.width / 2, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        // Inner highlight
+        ctx.globalAlpha = 0.4;
+        ctx.fillStyle = '#FFF';
+        ctx.beginPath();
+        ctx.moveTo(0, -obstacle.height / 4);
+        ctx.lineTo(obstacle.width / 4, 0);
+        ctx.lineTo(0, obstacle.height / 4);
+        ctx.lineTo(-obstacle.width / 4, 0);
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        ctx.fillStyle = '#555';
+        ctx.shadowColor = '#333';
+        ctx.shadowBlur = 5;
+        ctx.beginPath();
+        ctx.arc(0, 0, obstacle.width / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#777';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    });
+
+    // Draw gates
+    this.gates.forEach((gate) => {
+      ctx.save();
+
+      const laneWidth = CANVAS_WIDTH / 3;
+      const colors = ['#00FF88', '#667788', '#9D00FF'];
+      const labels = ['EASY', 'SKIP', 'HARD'];
+
+      for (let i = 0; i < 3; i++) {
+        const x = laneWidth * i + laneWidth / 2;
+
+        ctx.strokeStyle = colors[i];
+        ctx.lineWidth = 3;
+        ctx.shadowColor = colors[i];
+        ctx.shadowBlur = 20;
+
+        // Draw arch
+        ctx.beginPath();
+        ctx.arc(x, gate.y, GATE_WIDTH / 2, Math.PI, 0);
+        ctx.stroke();
+
+        // Draw pillars
+        ctx.beginPath();
+        ctx.moveTo(x - GATE_WIDTH / 2, gate.y);
+        ctx.lineTo(x - GATE_WIDTH / 2, gate.y + GATE_HEIGHT);
+        ctx.moveTo(x + GATE_WIDTH / 2, gate.y);
+        ctx.lineTo(x + GATE_WIDTH / 2, gate.y + GATE_HEIGHT);
+        ctx.stroke();
+
+        // Label
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = colors[i];
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(labels[i], x, gate.y - GATE_WIDTH / 2 - 8);
+      }
+
+      ctx.restore();
+    });
+
+    // Draw ship
+    this.renderShip();
+
+    // Draw particles
+    this.particles.forEach((particle) => {
+      const alpha = particle.life / particle.maxLife;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = particle.color;
+      ctx.shadowColor = particle.color;
+      ctx.shadowBlur = 6;
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size * alpha, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // Draw boost effect overlay
+    if (this.isBoosting) {
+      ctx.save();
+      ctx.globalAlpha = 0.05;
+      ctx.fillStyle = '#00D9FF';
+      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+      // Speed lines
+      ctx.globalAlpha = 0.15;
+      ctx.strokeStyle = '#00D9FF';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 8; i++) {
+        const x = Math.random() * CANVAS_WIDTH;
+        const len = 40 + Math.random() * 80;
+        ctx.beginPath();
+        ctx.moveTo(x, Math.random() * CANVAS_HEIGHT);
+        ctx.lineTo(x, Math.random() * CANVAS_HEIGHT + len);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      this.spawnBoostParticles();
+    }
+  }
+
+  private renderShip() {
+    const ctx = this.ctx;
+    const shipY = CANVAS_HEIGHT * SHIP_Y_PERCENT;
+    const W = SHIP_WIDTH;
+    const H = SHIP_HEIGHT;
+
+    // Respawn flash (blink effect)
+    if (this.isInvincible && Math.floor(this.respawnFlashTimer * 8) % 2 === 0) {
+      return;
+    }
+
+    ctx.save();
+    ctx.translate(this.ship.x, shipY);
+
+    // Ship glow
+    ctx.shadowColor = this.profile.cosmetics.color;
+    ctx.shadowBlur = this.isBoosting ? 25 : 12;
+    ctx.fillStyle = this.profile.cosmetics.color;
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.lineWidth = 1.5;
+
+    switch (this.profile.cosmetics.shipShape) {
+      // ── Default shuttle: slightly rounded body with swept fins ──────────────
+      case 'default':
+      default: {
+        ctx.beginPath();
+        ctx.moveTo(0, -H / 2);
+        ctx.lineTo(W * 0.3, -H * 0.1);
+        ctx.lineTo(W * 0.5, H * 0.4);
+        ctx.lineTo(W * 0.25, H * 0.2);
+        ctx.lineTo(0, H * 0.45);
+        ctx.lineTo(-W * 0.25, H * 0.2);
+        ctx.lineTo(-W * 0.5, H * 0.4);
+        ctx.lineTo(-W * 0.3, -H * 0.1);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
+
+      // ── Diamond ─────────────────────────────────────────────────────────────
+      case 'diamond': {
+        ctx.beginPath();
+        ctx.moveTo(0, -H / 2);
+        ctx.lineTo(W / 2, 0);
+        ctx.lineTo(0, H / 2);
+        ctx.lineTo(-W / 2, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
+
+      // ── Rocket: narrow body + side fins ─────────────────────────────────────
+      case 'rocket': {
+        ctx.beginPath();
+        ctx.moveTo(0, -H / 2);
+        ctx.lineTo(W * 0.2, -H * 0.15);
+        ctx.lineTo(W * 0.2, H * 0.25);
+        ctx.lineTo(W * 0.5, H * 0.5);
+        ctx.lineTo(W * 0.2, H * 0.3);
+        ctx.lineTo(-W * 0.2, H * 0.3);
+        ctx.lineTo(-W * 0.5, H * 0.5);
+        ctx.lineTo(-W * 0.2, H * 0.25);
+        ctx.lineTo(-W * 0.2, -H * 0.15);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Nose window
+        ctx.globalAlpha = 0.4;
+        ctx.fillStyle = '#FFF';
+        ctx.beginPath();
+        ctx.ellipse(0, -H * 0.28, W * 0.1, H * 0.08, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = this.profile.cosmetics.color;
+        break;
+      }
+
+      // ── UFO: saucer shape ────────────────────────────────────────────────────
+      case 'ufo': {
+        // Lower saucer body
+        ctx.beginPath();
+        ctx.ellipse(0, H * 0.1, W * 0.5, H * 0.22, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // Upper dome
+        ctx.beginPath();
+        ctx.ellipse(0, -H * 0.05, W * 0.3, H * 0.25, 0, Math.PI, 0);
+        ctx.fill();
+        ctx.stroke();
+        // Dome window
+        ctx.globalAlpha = 0.4;
+        ctx.fillStyle = '#00FFFF';
+        ctx.beginPath();
+        ctx.ellipse(0, -H * 0.12, W * 0.14, H * 0.1, 0, Math.PI, 0);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = this.profile.cosmetics.color;
+        break;
+      }
+
+      // ── 5-pointed Star ───────────────────────────────────────────────────────
+      case 'star': {
+        const outerR = H / 2;
+        const innerR = H / 4.5;
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const outerA = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+          const innerA = outerA + (2 * Math.PI) / 10;
+          if (i === 0) ctx.moveTo(Math.cos(outerA) * outerR, Math.sin(outerA) * outerR);
+          else ctx.lineTo(Math.cos(outerA) * outerR, Math.sin(outerA) * outerR);
+          ctx.lineTo(Math.cos(innerA) * innerR, Math.sin(innerA) * innerR);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
+
+      // ── Crazy Cat: round body + triangle ears + whiskers ────────────────────
+      case 'crazy-cat': {
+        // Body
+        ctx.beginPath();
+        ctx.ellipse(0, H * 0.1, W * 0.42, H * 0.36, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // Left ear
+        ctx.beginPath();
+        ctx.moveTo(-W * 0.3, -H * 0.05);
+        ctx.lineTo(-W * 0.48, -H * 0.46);
+        ctx.lineTo(-W * 0.1, -H * 0.22);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Right ear
+        ctx.beginPath();
+        ctx.moveTo(W * 0.3, -H * 0.05);
+        ctx.lineTo(W * 0.48, -H * 0.46);
+        ctx.lineTo(W * 0.1, -H * 0.22);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Eyes (white dots)
+        ctx.fillStyle = '#FFF';
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.arc(-W * 0.15, H * 0.02, 4, 0, Math.PI * 2);
+        ctx.arc(W * 0.15, H * 0.02, 4, 0, Math.PI * 2);
+        ctx.fill();
+        // Pupils
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(-W * 0.15, H * 0.04, 2, 0, Math.PI * 2);
+        ctx.arc(W * 0.15, H * 0.04, 2, 0, Math.PI * 2);
+        ctx.fill();
+        // Whiskers
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+        ctx.lineWidth = 1;
+        ctx.shadowBlur = 0;
+        [[-1, -1], [-1, 0], [-1, 1], [1, -1], [1, 0], [1, 1]].forEach(([side, slope]) => {
+          const sx = side * W * 0.12;
+          const ex = side * W * 0.46;
+          const ey = H * 0.16 + slope * 5;
+          ctx.beginPath();
+          ctx.moveTo(sx, H * 0.16);
+          ctx.lineTo(ex, ey);
+          ctx.stroke();
+        });
+        ctx.fillStyle = this.profile.cosmetics.color;
+        ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+        ctx.lineWidth = 1.5;
+        ctx.shadowBlur = this.isBoosting ? 25 : 12;
+        break;
+      }
+
+      // ── Stealth: flat swept-wing delta ───────────────────────────────────────
+      case 'stealth': {
+        ctx.beginPath();
+        ctx.moveTo(0, -H / 2);
+        ctx.lineTo(W * 0.55, H * 0.2);
+        ctx.lineTo(W * 0.35, H * 0.5);
+        ctx.lineTo(0, H * 0.25);
+        ctx.lineTo(-W * 0.35, H * 0.5);
+        ctx.lineTo(-W * 0.55, H * 0.2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
+
+      // ── Phantom: broad triangular delta ─────────────────────────────────────
+      case 'phantom': {
+        ctx.beginPath();
+        ctx.moveTo(0, -H / 2);
+        ctx.lineTo(W * 0.65, H / 2);
+        ctx.lineTo(0, H * 0.2);
+        ctx.lineTo(-W * 0.65, H / 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
+
+      // ── Dragon: spiky silhouette ─────────────────────────────────────────────
+      case 'dragon': {
+        ctx.beginPath();
+        ctx.moveTo(0, -H / 2);
+        ctx.lineTo(W * 0.2, -H * 0.3);
+        ctx.lineTo(W * 0.38, -H * 0.48);
+        ctx.lineTo(W * 0.28, -H * 0.18);
+        ctx.lineTo(W * 0.5, H * 0.15);
+        ctx.lineTo(W * 0.28, H * 0.45);
+        ctx.lineTo(0, H * 0.28);
+        ctx.lineTo(-W * 0.28, H * 0.45);
+        ctx.lineTo(-W * 0.5, H * 0.15);
+        ctx.lineTo(-W * 0.28, -H * 0.18);
+        ctx.lineTo(-W * 0.38, -H * 0.48);
+        ctx.lineTo(-W * 0.2, -H * 0.3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
+
+      // ── Ninja: 4-pointed shuriken ────────────────────────────────────────────
+      case 'ninja': {
+        const nr = H / 2;
+        const nir = H * 0.18;
+        ctx.beginPath();
+        for (let i = 0; i < 4; i++) {
+          const outerA = (i * Math.PI) / 2 - Math.PI / 2;
+          const innerA = outerA + Math.PI / 4;
+          if (i === 0) ctx.moveTo(Math.cos(outerA) * nr, Math.sin(outerA) * nr);
+          else ctx.lineTo(Math.cos(outerA) * nr, Math.sin(outerA) * nr);
+          ctx.lineTo(Math.cos(innerA) * nir, Math.sin(innerA) * nir);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
+    }
+
+    // ── Trail ──────────────────────────────────────────────────────────────────
+    const trail = this.profile.cosmetics.trail;
+    if (trail !== 'none') {
+      const ty0 = H * 0.2;
+      const ty1 = H * 0.5 + 45;
+      const gradient = ctx.createLinearGradient(0, ty0, 0, ty1);
+
+      switch (trail) {
+        case 'fire':
+          gradient.addColorStop(0, '#FF6600');
+          gradient.addColorStop(0.5, '#FF2200');
+          gradient.addColorStop(1, 'transparent');
+          break;
+        case 'rainbow':
+          gradient.addColorStop(0,    '#FF0000');
+          gradient.addColorStop(0.17, '#FF8800');
+          gradient.addColorStop(0.33, '#FFFF00');
+          gradient.addColorStop(0.5,  '#00FF00');
+          gradient.addColorStop(0.67, '#0088FF');
+          gradient.addColorStop(0.83, '#8800FF');
+          gradient.addColorStop(1,    'transparent');
+          break;
+        case 'electric':
+          gradient.addColorStop(0, '#00FFFF');
+          gradient.addColorStop(0.5, '#AAFFFF');
+          gradient.addColorStop(1, 'transparent');
+          break;
+        case 'void':
+          gradient.addColorStop(0, '#6600AA');
+          gradient.addColorStop(0.5, '#220044');
+          gradient.addColorStop(1, 'transparent');
+          break;
+        case 'nebula':
+          gradient.addColorStop(0, '#FF00CC');
+          gradient.addColorStop(0.5, '#8800FF');
+          gradient.addColorStop(1, 'transparent');
+          break;
+        case 'sparkle':
+        default:
+          gradient.addColorStop(0, '#FFFFFF');
+          gradient.addColorStop(0.4, '#AADDFF');
+          gradient.addColorStop(1, 'transparent');
+          break;
+      }
+
+      ctx.globalAlpha = 0.55;
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.moveTo(-W * 0.28, ty0);
+      ctx.lineTo(0, ty1);
+      ctx.lineTo(W * 0.28, ty0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    // ── Engine glow ────────────────────────────────────────────────────────────
+    ctx.globalAlpha = 0.9;
+    const engineGlow = ctx.createRadialGradient(0, H / 2 + 5, 2, 0, H / 2 + 5, 12);
+    engineGlow.addColorStop(0, this.isBoosting ? '#00FFFF' : '#00D9FF');
+    engineGlow.addColorStop(1, 'transparent');
+    ctx.fillStyle = engineGlow;
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.arc(0, H / 2 + 5, 12, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // Public methods for external control
+  setGateResult(gateId: string, correct: boolean) {
+    const gate = this.gates.find((g) => g.id === gateId);
+    // Only act if the gate hasn't already been resolved by the auto-fail logic.
+    // Without this guard, onGatePass fires twice when the player submits an
+    // answer during the same frame that the gate scrolls past the ship.
+    if (gate && gate.solved === null) {
+      gate.solved = correct;
+      this.callbacks.onGatePass(correct);
+
+      if (correct) {
+        this.spawnShardParticles(gate.x, gate.y);
+      }
+    }
+  }
+
+>>>>>>> origin/claude/fix-wrong-answer-hang-kEK8Y
   getDistance(): number {
     return this.distance;
   }

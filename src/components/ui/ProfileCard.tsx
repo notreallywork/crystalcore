@@ -65,11 +65,11 @@ export function ProfileCard({ profile, isLastPlayed, onClick, onDelete }: Profil
               <motion.div
                 className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-purple-400"
                 initial={{ width: 0 }}
-                animate={{ width: `${(profile.treeIndex / 20) * 100}%` }}
+                animate={{ width: `${Math.round(Object.values(profile.branchProgress ?? {}).reduce((a: number, b: number) => a + b, 0) / 23 * 100)}%` }}
                 transition={{ duration: 0.8 }}
               />
             </div>
-            <span className="text-white/30 text-[10px] font-mono">{profile.treeIndex}/20</span>
+            <span className="text-white/30 text-[10px] font-mono">{Object.values(profile.branchProgress ?? {}).reduce((a: number, b: number) => a + b, 0)}/23</span>
           </div>
         </div>
       </div>

@@ -3,7 +3,11 @@ import { persist } from 'zustand/middleware';
 import type { Profile, ProfileId, RaceSession, TechTreeNode, CompetencyLevel } from '@/types';
 import { ProgressionEngine } from '@/engines/ProgressionEngine';
 
+<<<<<<< HEAD
 const CURRENT_VERSION = 4;
+=======
+const CURRENT_VERSION = 3;
+>>>>>>> origin/claude/fix-wrong-answer-hang-kEK8Y
 
 const SHIP_COLORS = [
   '#00D9FF', '#9D00FF', '#00FF88', '#FF3366', '#FFD700',
@@ -25,7 +29,7 @@ export function createProfile(
     age,
     competency,
     shards: 0,
-    treeIndex: 0,
+    branchProgress: { stats: 0, colors: 0, trails: 0, shapes: 0 },
     unlockedNodes: [],
     difficulty: competency === 'beginner' ? 1 : competency === 'intermediate' ? 2 : 3,
     completedStages: [],
@@ -39,6 +43,11 @@ export function createProfile(
       color: SHIP_COLORS[colorIndex],
       trail: 'none',
       shipShape: 'default',
+    },
+    ownedCosmetics: {
+      colors: [],
+      trails: [],
+      shapes: [],
     },
     preferences: {
       steering: isYoung ? 'auto' : 'manual',
@@ -78,6 +87,7 @@ interface GameStoreActions {
   completeStage: (stageId: string) => void;
   canAffordNode: (node: TechTreeNode) => boolean;
   purchaseNode: (node: TechTreeNode) => boolean;
+  equipCosmetic: (type: 'color' | 'trail' | 'shape', value: string) => void;
 
   updateProfile: (profileId: ProfileId, updates: Partial<Profile>) => void;
   adjustDifficulty: (sessionResults: { gatesAttempted: number; correctAnswers: number; avgTime: number }) => void;
@@ -328,31 +338,47 @@ export const useGameStore = create<GameStore>()(
           if (!profile) return state;
 
           const tree = ProgressionEngine.getTechTree(profile);
-          const nodeIndex = tree.nodes.findIndex((n) => n.id === node.id);
+          const branchNodes = tree.nodes.filter((n) => n.branch === node.branch);
+          const nodeIndexInBranch = branchNodes.findIndex((n) => n.id === node.id);
+          const currentBranchProgress = profile.branchProgress[node.branch as keyof typeof profile.branchProgress] ?? 0;
 
-          if (nodeIndex === -1) return state;
-          if (nodeIndex !== profile.treeIndex) return state;
+          if (nodeIndexInBranch === -1) return state;
+          if (nodeIndexInBranch !== currentBranchProgress) return state;
 
           const updates: Partial<Profile> = {
             shards: profile.shards - node.cost,
-            treeIndex: profile.treeIndex + 1,
+            branchProgress: {
+              ...profile.branchProgress,
+              [node.branch]: currentBranchProgress + 1,
+            },
             unlockedNodes: [...profile.unlockedNodes, node.id],
           };
 
-          if (node.type === 'stat' && node.stat) {
+          // Stat upgrades apply immediately
+          if (node.type === 'stat' && node.stat && node.value !== undefined) {
             if (node.stat === 'speed') {
-              updates.stats = { ...profile.stats, speed: node.value || profile.stats.speed };
+              updates.stats = { ...profile.stats, speed: node.value };
             } else if (node.stat === 'shield') {
-              updates.stats = { ...profile.stats, shield: node.value || profile.stats.shield };
+              updates.stats = { ...profile.stats, shield: node.value };
             } else if (node.stat === 'boostDuration') {
-              updates.stats = { ...profile.stats, boostDuration: node.value || profile.stats.boostDuration };
+              updates.stats = { ...profile.stats, boostDuration: node.value };
             }
-          } else if (node.type === 'cosmetic' && node.effect) {
+          }
+
+          // Cosmetics: add to owned list AND auto-equip the new item
+          if (node.type === 'cosmetic' && node.effect) {
+            const owned = { ...profile.ownedCosmetics };
             if (node.visual === 'paint-ship') {
+              owned.colors = [...owned.colors, node.effect];
+              updates.ownedCosmetics = owned;
               updates.cosmetics = { ...profile.cosmetics, color: node.effect };
             } else if (node.visual === 'add-trail') {
+              owned.trails = [...owned.trails, node.effect];
+              updates.ownedCosmetics = owned;
               updates.cosmetics = { ...profile.cosmetics, trail: node.effect };
             } else if (node.visual === 'change-shape') {
+              owned.shapes = [...owned.shapes, node.effect];
+              updates.ownedCosmetics = owned;
               updates.cosmetics = { ...profile.cosmetics, shipShape: node.effect };
             }
           }
@@ -365,6 +391,18 @@ export const useGameStore = create<GameStore>()(
         });
 
         return true;
+      },
+
+      equipCosmetic: (type, value) => {
+        const { activeProfileId } = get();
+        if (!activeProfileId) return;
+        set((state) => ({
+          profiles: state.profiles.map((p) => {
+            if (p.id !== activeProfileId) return p;
+            const cosmeticKey = type === 'color' ? 'color' : type === 'trail' ? 'trail' : 'shipShape';
+            return { ...p, cosmetics: { ...p.cosmetics, [cosmeticKey]: value } };
+          }),
+        }));
       },
 
       updateProfile: (profileId, updates) => {
@@ -429,11 +467,28 @@ export const useGameStore = create<GameStore>()(
       }),
       migrate: (persistedState: unknown, version: number) => {
         const state = persistedState as Record<string, unknown>;
+
+        // v1 → v2: flat profile objects → profiles array
         if (version < 2) {
           const profiles: Profile[] = [];
+          const patchProfile = (raw: Record<string, unknown>, defaults: Partial<Profile>): Profile => ({
+            ...createProfile(raw.name as string, raw.age as number, (raw.competency as CompetencyLevel) ?? 'beginner'),
+            ...defaults,
+            id: raw.id as string ?? defaults.id ?? String(Date.now()),
+            shards: (raw.shards as number) ?? 0,
+            branchProgress: { stats: 0, colors: 0, trails: 0, shapes: 0 },
+            unlockedNodes: (raw.unlockedNodes as string[]) ?? [],
+            stats: (raw.stats as Profile['stats']) ?? { speed: 1.0, shield: 3, boostDuration: 3 },
+            cosmetics: (raw.cosmetics as Profile['cosmetics']) ?? { color: '#00D9FF', trail: 'none', shipShape: 'default' },
+            ownedCosmetics: { colors: [], trails: [], shapes: [] },
+          });
+
           const oldEmerson = state.emerson as Record<string, unknown> | undefined;
           const oldKyra = state.kyra as Record<string, unknown> | undefined;
+          if (oldEmerson) profiles.push(patchProfile({ ...oldEmerson, name: 'Emerson', age: 7, id: 'emerson' }, { id: 'emerson' }));
+          if (oldKyra) profiles.push(patchProfile({ ...oldKyra, name: 'Kyra', age: 11, id: 'kyra' }, { id: 'kyra' }));
 
+<<<<<<< HEAD
           if (oldEmerson) {
             profiles.push({
               id: 'emerson',
@@ -511,6 +566,21 @@ export const useGameStore = create<GameStore>()(
             version: CURRENT_VERSION,
           };
         }
+=======
+          return { profiles, activeProfileId: state.activeProfile ?? null, version: CURRENT_VERSION, currentRun: null };
+        }
+
+        // v2 → v3: add branchProgress and ownedCosmetics to existing profiles
+        if (version < 3) {
+          const profiles = ((state.profiles as Record<string, unknown>[]) ?? []).map((raw) => ({
+            ...raw,
+            branchProgress: { stats: 0, colors: 0, trails: 0, shapes: 0 },
+            ownedCosmetics: { colors: [], trails: [], shapes: [] },
+          }));
+          return { ...state, profiles, version: CURRENT_VERSION };
+        }
+
+>>>>>>> origin/claude/fix-wrong-answer-hang-kEK8Y
         return state;
       },
     }
