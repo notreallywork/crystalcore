@@ -32,6 +32,7 @@ export function createProfile(
       speed: 1.0,
       shield: 3,
       boostDuration: 3,
+      weaponLevel: 1,
     },
     cosmetics: {
       color: SHIP_COLORS[colorIndex],
@@ -79,6 +80,10 @@ interface GameStoreActions {
   canAffordNode: (node: TechTreeNode) => boolean;
   purchaseNode: (node: TechTreeNode) => boolean;
   equipCosmetic: (type: 'color' | 'trail' | 'shape', value: string) => void;
+
+  completeStage: () => void;
+  destroyRock: () => void;
+  defeatBoss: () => void;
 
   updateProfile: (profileId: ProfileId, updates: Partial<Profile>) => void;
   adjustDifficulty: (sessionResults: { gatesAttempted: number; correctAnswers: number; avgTime: number }) => void;
@@ -146,6 +151,8 @@ export const useGameStore = create<GameStore>()(
             shieldHits: 0,
             isBoosting: false,
             boostTimeLeft: 0,
+            bossesDefeated: 0,
+            rocksDestroyed: 0,
           },
         });
       },
@@ -358,6 +365,34 @@ export const useGameStore = create<GameStore>()(
         }));
       },
 
+      completeStage: () => {
+        // Stage completion logic — full implementation TBD
+      },
+
+      destroyRock: () => {
+        set((state) => {
+          if (!state.currentRun) return state;
+          return {
+            currentRun: {
+              ...state.currentRun,
+              rocksDestroyed: state.currentRun.rocksDestroyed + 1,
+            },
+          };
+        });
+      },
+
+      defeatBoss: () => {
+        set((state) => {
+          if (!state.currentRun) return state;
+          return {
+            currentRun: {
+              ...state.currentRun,
+              bossesDefeated: state.currentRun.bossesDefeated + 1,
+            },
+          };
+        });
+      },
+
       updateProfile: (profileId, updates) => {
         set((state) => ({
           profiles: state.profiles.map((p) =>
@@ -431,7 +466,7 @@ export const useGameStore = create<GameStore>()(
             shards: (raw.shards as number) ?? 0,
             branchProgress: { stats: 0, colors: 0, trails: 0, shapes: 0 },
             unlockedNodes: (raw.unlockedNodes as string[]) ?? [],
-            stats: (raw.stats as Profile['stats']) ?? { speed: 1.0, shield: 3, boostDuration: 3 },
+            stats: (raw.stats as Profile['stats']) ?? { speed: 1.0, shield: 3, boostDuration: 3, weaponLevel: 1 },
             cosmetics: (raw.cosmetics as Profile['cosmetics']) ?? { color: '#00D9FF', trail: 'none', shipShape: 'default' },
             ownedCosmetics: { colors: [], trails: [], shapes: [] },
           });

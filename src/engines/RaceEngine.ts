@@ -73,12 +73,15 @@ export class RaceEngine {
 
   // Input state
   private touchX: number | null = null;
+  private currentLane = 1;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
     canvas: HTMLCanvasElement,
     profile: Profile,
     track: TrackConfig,
-    callbacks: RaceEngineCallbacks
+    callbacks: RaceEngineCallbacks,
+    _stageConfig?: unknown
   ) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
@@ -88,10 +91,10 @@ export class RaceEngine {
 
     this.resize();
 
+    this.currentLane = 1;
     this.ship = {
       x: CANVAS_WIDTH * LANES[1],
       targetX: CANVAS_WIDTH * LANES[1],
-      lane: 1,
       width: SHIP_WIDTH,
       height: SHIP_HEIGHT,
     };
@@ -130,8 +133,8 @@ export class RaceEngine {
     CANVAS_HEIGHT = rect.height;
 
     if (this.ship) {
-      this.ship.x = CANVAS_WIDTH * LANES[this.ship.lane];
-      this.ship.targetX = CANVAS_WIDTH * LANES[this.ship.lane];
+      this.ship.x = CANVAS_WIDTH * LANES[this.currentLane];
+      this.ship.targetX = CANVAS_WIDTH * LANES[this.currentLane];
     }
 
     this.initStarField();
@@ -176,14 +179,14 @@ export class RaceEngine {
 
   private handleKeyDown(e: KeyboardEvent) {
     if (e.key === 'ArrowLeft') {
-      this.setLane(Math.max(0, this.ship.lane - 1));
+      this.setLane(Math.max(0, this.currentLane - 1));
     } else if (e.key === 'ArrowRight') {
-      this.setLane(Math.min(2, this.ship.lane + 1));
+      this.setLane(Math.min(2, this.currentLane + 1));
     }
   }
 
   private setLane(lane: number) {
-    this.ship.lane = lane;
+    this.currentLane = lane;
     this.ship.targetX = CANVAS_WIDTH * LANES[lane];
   }
 
@@ -350,7 +353,6 @@ export class RaceEngine {
       y: -50,
       width: OBSTACLE_WIDTH,
       height: OBSTACLE_HEIGHT,
-      lane,
       type: Math.random() > 0.4 ? 'crystal' : 'rock',
     };
     this.obstacles.push(obstacle);
@@ -930,6 +932,10 @@ export class RaceEngine {
   }
 
   // Public methods for external control
+  setBossMathResult(_correct: boolean) {
+    // Boss math challenge result handler — full implementation TBD
+  }
+
   setGateResult(gateId: string, correct: boolean) {
     const gate = this.gates.find((g) => g.id === gateId);
     // Only act if the gate hasn't already been resolved by the auto-fail logic.

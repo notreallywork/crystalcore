@@ -10,6 +10,7 @@ interface GateOverlayProps {
   profile: Profile;
   onSolve: (correct: boolean) => void;
   onSkip: () => void;
+  isBossChallenge?: boolean;
 }
 
 export function GateOverlay({ gate, profile, onSolve, onSkip }: GateOverlayProps) {

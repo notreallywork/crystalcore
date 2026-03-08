@@ -21,6 +21,7 @@ export interface Profile {
     speed: number;
     shield: number;
     boostDuration: number;
+    weaponLevel: number;
   };
   /** The currently equipped cosmetics. */
   cosmetics: {
@@ -59,6 +60,8 @@ export interface RaceSession {
   shieldHits: number;
   isBoosting: boolean;
   boostTimeLeft: number;
+  bossesDefeated: number;
+  rocksDestroyed: number;
 }
 
 export interface MathProblem {
@@ -126,7 +129,6 @@ export interface Obstacle {
   y: number;
   width: number;
   height: number;
-  lane: number;
   type: 'crystal' | 'rock';
 }
 
@@ -157,7 +159,6 @@ export interface Particle {
 export interface ShipState {
   x: number;
   targetX: number;
-  lane: number;
   width: number;
   height: number;
 }
