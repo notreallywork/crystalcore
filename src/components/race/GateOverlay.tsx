@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import { useState, useEffect, useCallback, useRef } from 'react';
-=======
-import { useState, useEffect } from 'react';
->>>>>>> origin/claude/fix-wrong-answer-hang-kEK8Y
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Profile, MathProblem, Gate } from '@/types';
 import { MathValidator } from '@/engines/MathValidator';
@@ -60,7 +56,6 @@ export function GateOverlay({ gate, profile, onSolve, onSkip, isBossChallenge = 
     if (solved !== null) return;
 
     const timer = setInterval(() => {
-<<<<<<< HEAD
       setTimeLeft((prev) => {
         if (prev <= 0.1) {
           // Use ref to prevent double-fire from interval
@@ -73,38 +68,17 @@ export function GateOverlay({ gate, profile, onSolve, onSkip, isBossChallenge = 
         }
         return prev - 0.1;
       });
-=======
-      setTimeLeft((prev) => Math.max(0, prev - 0.1));
->>>>>>> origin/claude/fix-wrong-answer-hang-kEK8Y
     }, 100);
 
     return () => clearInterval(timer);
   }, [solved]);
 
-<<<<<<< HEAD
   const triggerSolve = useCallback((isCorrect: boolean) => {
     if (solvedRef.current) return;
     solvedRef.current = true;
     setSolved(isCorrect);
     solveTimeoutRef.current = setTimeout(() => onSolveRef.current(isCorrect), 800);
   }, []);
-=======
-  // Detect timeout: when the clock hits zero before an answer is submitted
-  useEffect(() => {
-    if (solved === null && timeLeft <= 0) {
-      setSolved(false);
-    }
-  }, [solved, timeLeft]);
-
-  // After any answer (correct or wrong), call onSolve once with a short delay
-  // for feedback visibility. Using an effect (not a setTimeout in a handler)
-  // ensures there is exactly one scheduled call and it is cancelled on unmount.
-  useEffect(() => {
-    if (solved === null) return;
-    const timer = setTimeout(() => onSolve(solved), 800);
-    return () => clearTimeout(timer);
-  }, [solved, onSolve]);
->>>>>>> origin/claude/fix-wrong-answer-hang-kEK8Y
 
   const handleNumpadInput = (digit: string) => {
     if (solved !== null) return;
@@ -125,12 +99,7 @@ export function GateOverlay({ gate, profile, onSolve, onSkip, isBossChallenge = 
     if (isNaN(numAnswer)) return;
     const isCorrect = MathValidator.validateAnswer(problem, numAnswer);
 
-<<<<<<< HEAD
     triggerSolve(isCorrect);
-=======
-    setSolved(isCorrect);
-    // onSolve is called automatically by the solved-watcher effect above
->>>>>>> origin/claude/fix-wrong-answer-hang-kEK8Y
   };
 
   const handleDragStart = (count: number) => {
@@ -141,18 +110,12 @@ export function GateOverlay({ gate, profile, onSolve, onSkip, isBossChallenge = 
   const handleDrop = () => {
     if (solved !== null || !problem) return;
 
-<<<<<<< HEAD
     // Auto-calculate total for tap-to-merge (works on tablet where drag doesn't)
     const total = draggedCrystals > 0
       ? draggedCrystals
       : (problem.setup?.pileA?.count || 0) + (problem.setup?.pileB?.count || 0);
     const isCorrect = MathValidator.validateAnswer(problem, total);
     triggerSolve(isCorrect);
-=======
-    const isCorrect = MathValidator.validateAnswer(problem, draggedCrystals);
-    setSolved(isCorrect);
-    // onSolve is called automatically by the solved-watcher effect above
->>>>>>> origin/claude/fix-wrong-answer-hang-kEK8Y
   };
 
   const maxTime = isBossChallenge ? solveTime + 3 : solveTime;
