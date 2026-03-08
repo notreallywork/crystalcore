@@ -41,6 +41,8 @@ interface RaceEngineCallbacks {
   onDistanceUpdate: (delta: number) => void;
   onBoostTick: (deltaTime: number) => void;
   onRespawn: () => void;
+  onBossSpawn?: () => void;
+  onBossMathPhase?: (problem: MathProblem) => void;
 }
 
 export class RaceEngine {

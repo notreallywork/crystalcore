@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { Profile, ProfileId, RaceSession, TechTreeNode, CompetencyLevel } from '@/types';
 import { ProgressionEngine } from '@/engines/ProgressionEngine';
 
-const CURRENT_VERSION = 3;
+const CURRENT_VERSION = 4;
 
 const SHIP_COLORS = [
   '#00D9FF', '#9D00FF', '#00FF88', '#FF3366', '#FFD700',
@@ -51,6 +51,7 @@ export function createProfile(
     totalDistance: 0,
     totalRaces: 0,
     bestDistance: 0,
+    completedStages: [],
   };
 }
 
@@ -81,7 +82,7 @@ interface GameStoreActions {
   purchaseNode: (node: TechTreeNode) => boolean;
   equipCosmetic: (type: 'color' | 'trail' | 'shape', value: string) => void;
 
-  completeStage: () => void;
+  completeStage: (stageId: string) => void;
   destroyRock: () => void;
   defeatBoss: () => void;
 
@@ -365,8 +366,16 @@ export const useGameStore = create<GameStore>()(
         }));
       },
 
-      completeStage: () => {
-        // Stage completion logic — full implementation TBD
+      completeStage: (stageId: string) => {
+        const { activeProfileId } = get();
+        if (!activeProfileId) return;
+        set((state) => ({
+          profiles: state.profiles.map((p) => {
+            if (p.id !== activeProfileId) return p;
+            if (p.completedStages.includes(stageId)) return p;
+            return { ...p, completedStages: [...p.completedStages, stageId] };
+          }),
+        }));
       },
 
       destroyRock: () => {
@@ -486,6 +495,19 @@ export const useGameStore = create<GameStore>()(
             branchProgress: { stats: 0, colors: 0, trails: 0, shapes: 0 },
             ownedCosmetics: { colors: [], trails: [], shapes: [] },
           }));
+          return { ...state, profiles, version: 3 };
+        }
+
+        // v3 → v4: add completedStages and weaponLevel to existing profiles
+        if (version < 4) {
+          const profiles = ((state.profiles as Record<string, unknown>[]) ?? []).map((raw) => {
+            const stats = (raw.stats as Record<string, unknown>) ?? {};
+            return {
+              ...raw,
+              completedStages: (raw.completedStages as string[]) ?? [],
+              stats: { ...stats, weaponLevel: (stats.weaponLevel as number) ?? 1 },
+            };
+          });
           return { ...state, profiles, version: CURRENT_VERSION };
         }
 

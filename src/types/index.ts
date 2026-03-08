@@ -6,6 +6,7 @@ export type GateType = 'green' | 'purple' | 'skip';
 export type NodeType = 'stat' | 'cosmetic' | 'milestone';
 export type InteractionType = 'drag' | 'numpad';
 export type CompetencyLevel = 'beginner' | 'intermediate' | 'advanced';
+export type PowerupType = 'shield' | 'boost' | 'weapon' | 'magnet';
 
 export interface Profile {
   id: ProfileId;
@@ -42,6 +43,15 @@ export interface Profile {
   totalDistance: number;
   totalRaces: number;
   bestDistance: number;
+  completedStages: string[];
+}
+
+export interface StageConfig {
+  id: string;
+  name: string;
+  worldId: number;
+  gateCount: number;
+  hasBoss: boolean;
 }
 
 export interface GameState {
