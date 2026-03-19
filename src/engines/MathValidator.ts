@@ -1,4 +1,5 @@
 import type { MathProblem } from '@/types';
+import { DifficultyScaler } from './DifficultyScaler';
 
 const PILE_COLORS = ['blue', 'red', 'green', 'yellow', 'purple', 'orange', 'cyan', 'pink'];
 
@@ -138,9 +139,15 @@ export class MathValidator {
     };
   }
 
-  static getRandomProblem(templates: MathProblem[]): MathProblem {
+  static getRandomProblem(templates: MathProblem[], difficulty?: number): MathProblem {
     if (templates.length === 0) {
       throw new Error('No math problem templates available');
+    }
+
+    // If difficulty provided, use DifficultyScaler for weighted selection
+    if (difficulty !== undefined) {
+      const template = DifficultyScaler.selectProblemForDifficulty(templates, difficulty);
+      return this.generateProblemFromTemplate(template);
     }
 
     const template = this.pickRandom(templates);

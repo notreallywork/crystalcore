@@ -64,6 +64,12 @@ export interface RaceSession {
   boostTimeLeft: number;
   bossesDefeated: number;
   rocksDestroyed: number;
+  /** Consecutive correct answers in this session (resets on wrong answer) */
+  correctStreak: number;
+  /** Consecutive wrong answers in this session (resets on correct answer) */
+  wrongStreak: number;
+  /** Difficulty that adapts within the session based on streaks */
+  sessionDifficulty: number;
 }
 
 export interface MathProblem {
@@ -71,6 +77,8 @@ export interface MathProblem {
   visual: string;
   interaction: InteractionType;
   problemText: string | null;
+  /** Difficulty tier 1-5. Problems at or below the player's level are eligible. */
+  level?: number;
   variables?: Record<string, number[]>;
   /** Derived variables computed from base variables, e.g. {"C": "A*B"} */
   derived?: Record<string, string>;

@@ -7,34 +7,90 @@
   "templates": [
     {
       "id": "var-multiply",
+      "level": 1,
       "visual": "equation",
       "interaction": "numpad",
       "problemText": "{A} × {B} = ?",
-      "variables": {"A": [2, 3, 4, 5, 6, 7, 8, 9], "B": [2, 3, 4, 5, 6]},
+      "variables": {"A": [2, 3, 4, 5], "B": [2, 3, 4, 5]},
+      "validation": "A*B",
+      "hint": "Multiply the two numbers"
+    },
+    {
+      "id": "var-multiply-medium",
+      "level": 2,
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} × {B} = ?",
+      "variables": {"A": [3, 4, 5, 6, 7, 8], "B": [4, 5, 6, 7]},
       "validation": "A*B",
       "hint": "Multiply the two numbers"
     },
     {
       "id": "var-multiply-hard",
+      "level": 3,
       "visual": "equation",
       "interaction": "numpad",
       "problemText": "{A} × {B} = ?",
-      "variables": {"A": [6, 7, 8, 9, 11, 12], "B": [6, 7, 8, 9]},
+      "variables": {"A": [6, 7, 8, 9], "B": [6, 7, 8, 9]},
       "validation": "A*B",
       "hint": "Use your multiplication table tricks"
     },
     {
-      "id": "var-divide-clean",
+      "id": "var-multiply-extended",
+      "level": 4,
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} × {B} = ?",
+      "variables": {"A": [11, 12, 13, 15], "B": [3, 4, 5, 6, 7]},
+      "validation": "A*B",
+      "hint": "Break the big number into parts"
+    },
+    {
+      "id": "var-multiply-large",
+      "level": 5,
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} × {B} = ?",
+      "variables": {"A": [12, 15, 20, 25], "B": [6, 7, 8, 9, 11, 12]},
+      "validation": "A*B",
+      "hint": "Use the distributive property"
+    },
+    {
+      "id": "var-divide-easy",
+      "level": 1,
       "visual": "equation",
       "interaction": "numpad",
       "problemText": "{C} ÷ {A} = ?",
-      "variables": {"A": [2, 3, 4, 5, 6], "B": [2, 3, 4, 5, 6, 7, 8]},
+      "variables": {"A": [2, 3, 4, 5], "B": [2, 3, 4, 5]},
       "derived": {"C": "A*B"},
       "validation": "B",
       "hint": "How many groups of the second number make the first?"
     },
     {
+      "id": "var-divide-medium",
+      "level": 2,
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{C} ÷ {A} = ?",
+      "variables": {"A": [2, 3, 4, 5, 6], "B": [3, 4, 5, 6, 7, 8]},
+      "derived": {"C": "A*B"},
+      "validation": "B",
+      "hint": "Think: what times the divisor gives the dividend?"
+    },
+    {
+      "id": "var-divide-hard",
+      "level": 3,
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{C} ÷ {A} = ?",
+      "variables": {"A": [4, 5, 6, 7, 8, 9], "B": [6, 7, 8, 9, 10, 11]},
+      "derived": {"C": "A*B"},
+      "validation": "B",
+      "hint": "Use your times tables in reverse"
+    },
+    {
       "id": "var-divide-fives",
+      "level": 1,
       "visual": "equation",
       "interaction": "numpad",
       "problemText": "{C} ÷ 5 = ?",
@@ -45,33 +101,67 @@
     },
     {
       "id": "var-add-hard",
+      "level": 2,
       "visual": "equation",
       "interaction": "numpad",
       "problemText": "{A} + {B} = ?",
-      "variables": {"A": [23, 34, 45, 56, 67, 78, 89], "B": [14, 18, 23, 27, 29, 36, 42]},
+      "variables": {"A": [23, 34, 45, 56, 67, 78], "B": [14, 18, 23, 27, 29, 36]},
       "validation": "A+B",
       "hint": "Add the tens first, then the ones"
     },
     {
+      "id": "var-add-hundreds",
+      "level": 4,
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} + {B} = ?",
+      "variables": {"A": [125, 230, 340, 415], "B": [56, 75, 88, 120, 165]},
+      "validation": "A+B",
+      "hint": "Add hundreds, then tens, then ones"
+    },
+    {
       "id": "var-sub-hard",
+      "level": 2,
       "visual": "equation",
       "interaction": "numpad",
       "problemText": "{A} - {B} = ?",
-      "variables": {"A": [50, 60, 70, 80, 90, 100], "B": [12, 15, 18, 23, 27, 34, 38]},
+      "variables": {"A": [50, 60, 70, 80, 90, 100], "B": [12, 15, 18, 23, 27, 34]},
       "validation": "A-B",
       "hint": "Subtract tens first, then ones"
     },
     {
+      "id": "var-sub-hundreds",
+      "level": 4,
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} - {B} = ?",
+      "variables": {"A": [200, 300, 400, 500], "B": [45, 67, 89, 123, 156]},
+      "validation": "A-B",
+      "hint": "Subtract from the round number"
+    },
+    {
       "id": "var-half",
+      "level": 1,
       "visual": "pie-bar",
       "interaction": "numpad",
       "problemText": "Half of {A}",
-      "variables": {"A": [8, 12, 16, 20, 24, 30, 40, 50, 60, 80, 100]},
+      "variables": {"A": [8, 12, 16, 20, 24, 30, 40, 50]},
+      "validation": "A/2",
+      "hint": "Divide by 2"
+    },
+    {
+      "id": "var-half-hard",
+      "level": 3,
+      "visual": "pie-bar",
+      "interaction": "numpad",
+      "problemText": "Half of {A}",
+      "variables": {"A": [60, 80, 100, 120, 150, 200, 250, 500]},
       "validation": "A/2",
       "hint": "Divide by 2"
     },
     {
       "id": "var-quarter",
+      "level": 2,
       "visual": "pie-bar",
       "interaction": "numpad",
       "problemText": "Quarter of {A}",
@@ -81,6 +171,7 @@
     },
     {
       "id": "var-third",
+      "level": 2,
       "visual": "pie-bar",
       "interaction": "numpad",
       "problemText": "Third of {A}",
@@ -90,24 +181,47 @@
     },
     {
       "id": "var-grid-array",
+      "level": 1,
       "visual": "grid-array",
       "interaction": "numpad",
       "problemText": "{A} rows of {B} crystals. Total?",
-      "variables": {"A": [2, 3, 4, 5, 6, 7], "B": [3, 4, 5, 6, 7, 8]},
+      "variables": {"A": [2, 3, 4, 5], "B": [3, 4, 5, 6]},
+      "validation": "A*B",
+      "hint": "Rows × Columns"
+    },
+    {
+      "id": "var-grid-array-big",
+      "level": 3,
+      "visual": "grid-array",
+      "interaction": "numpad",
+      "problemText": "{A} rows of {B} crystals. Total?",
+      "variables": {"A": [5, 6, 7, 8], "B": [6, 7, 8, 9]},
       "validation": "A*B",
       "hint": "Rows × Columns"
     },
     {
       "id": "var-squared",
+      "level": 2,
       "visual": "equation",
       "interaction": "numpad",
       "problemText": "{A} × {A} = ?",
-      "variables": {"A": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]},
+      "variables": {"A": [2, 3, 4, 5, 6, 7]},
+      "validation": "A*A",
+      "hint": "Multiply the number by itself"
+    },
+    {
+      "id": "var-squared-hard",
+      "level": 4,
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} × {A} = ?",
+      "variables": {"A": [8, 9, 10, 11, 12]},
       "validation": "A*A",
       "hint": "Multiply the number by itself"
     },
     {
       "id": "var-missing-mult",
+      "level": 3,
       "visual": "equation",
       "interaction": "numpad",
       "problemText": "{A} × ? = {C}",
@@ -118,6 +232,7 @@
     },
     {
       "id": "var-missing-add-hard",
+      "level": 3,
       "visual": "equation",
       "interaction": "numpad",
       "problemText": "{A} + ? = {C}",
@@ -128,6 +243,7 @@
     },
     {
       "id": "var-double-then-add",
+      "level": 3,
       "visual": "equation",
       "interaction": "numpad",
       "problemText": "{A} × 2 + {B} = ?",
@@ -137,6 +253,7 @@
     },
     {
       "id": "var-subtract-from-hundred",
+      "level": 2,
       "visual": "equation",
       "interaction": "numpad",
       "problemText": "100 - {A} = ?",
@@ -146,6 +263,7 @@
     },
     {
       "id": "var-word-multiply",
+      "level": 2,
       "visual": "equation",
       "interaction": "numpad",
       "problemText": "{A} ships each carry {B} crystals. Total crystals?",
@@ -155,6 +273,7 @@
     },
     {
       "id": "var-word-divide",
+      "level": 2,
       "visual": "equation",
       "interaction": "numpad",
       "problemText": "Share {C} crystals equally among {A} pilots. How many each?",
@@ -164,17 +283,18 @@
       "hint": "Divide the total by the number of pilots"
     },
     {
-      "id": "var-word-remain",
+      "id": "var-word-fuel",
+      "level": 3,
       "visual": "equation",
       "interaction": "numpad",
-      "problemText": "You need {C} fuel cells. You have {A} packs of {B}. Enough?",
-      "variables": {"A": [3, 4, 5], "B": [5, 6, 7, 8]},
-      "derived": {"C": "A*B"},
-      "validation": "C",
+      "problemText": "{A} packs of {B} fuel cells each. How many cells?",
+      "variables": {"A": [3, 4, 5, 6], "B": [5, 6, 7, 8, 9]},
+      "validation": "A*B",
       "hint": "Multiply packs × cells per pack"
     },
     {
       "id": "var-order-ops",
+      "level": 4,
       "visual": "equation",
       "interaction": "numpad",
       "problemText": "{A} + {B} × {C} = ?",
@@ -183,43 +303,58 @@
       "hint": "Multiply first, then add"
     },
     {
-      "id": "var-perimeter-rect",
+      "id": "var-order-ops-sub",
+      "level": 5,
       "visual": "equation",
       "interaction": "numpad",
-      "problemText": "A rectangle is {A} long and {B} wide. What is the perimeter?",
+      "problemText": "{A} × {B} - {C} = ?",
+      "variables": {"A": [3, 4, 5, 6, 7], "B": [3, 4, 5, 6], "C": [2, 3, 5, 7, 10]},
+      "validation": "A*B-C",
+      "hint": "Multiply first, then subtract"
+    },
+    {
+      "id": "var-perimeter-rect",
+      "level": 3,
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "A rectangle: {A} long, {B} wide. Perimeter?",
       "variables": {"A": [3, 4, 5, 6, 7, 8], "B": [2, 3, 4, 5]},
       "validation": "2*(A+B)",
       "hint": "Add length + width, then double it"
     },
     {
       "id": "var-area-rect",
+      "level": 2,
       "visual": "equation",
       "interaction": "numpad",
-      "problemText": "A rectangle is {A} long and {B} wide. What is the area?",
+      "problemText": "A rectangle: {A} long, {B} wide. Area?",
       "variables": {"A": [3, 4, 5, 6, 7, 8, 9], "B": [2, 3, 4, 5, 6]},
       "validation": "A*B",
       "hint": "Multiply length × width"
     },
     {
       "id": "var-word-speed",
+      "level": 3,
       "visual": "equation",
       "interaction": "numpad",
-      "problemText": "A ship travels {A} km each hour for {B} hours. Total distance?",
+      "problemText": "A ship goes {A} km/h for {B} hours. Distance?",
       "variables": {"A": [5, 8, 10, 12, 15, 20], "B": [2, 3, 4, 5]},
       "validation": "A*B",
       "hint": "Speed × Time = Distance"
     },
     {
       "id": "var-word-change",
+      "level": 3,
       "visual": "equation",
       "interaction": "numpad",
-      "problemText": "You pay with {A} for an item costing {B}. Change?",
+      "problemText": "You pay {A} for something costing {B}. Change?",
       "variables": {"A": [50, 100], "B": [12, 15, 23, 27, 35, 42, 68]},
       "validation": "A-B",
       "hint": "Subtract the cost from what you paid"
     },
     {
       "id": "var-ten-percent",
+      "level": 3,
       "visual": "equation",
       "interaction": "numpad",
       "problemText": "10% of {A} = ?",
@@ -228,16 +363,28 @@
       "hint": "Divide by 10"
     },
     {
-      "id": "var-round-to-ten",
+      "id": "var-fifty-percent",
+      "level": 4,
       "visual": "equation",
       "interaction": "numpad",
-      "problemText": "Round {A} to the nearest 10",
-      "variables": {"A": [13, 17, 22, 28, 35, 41, 46, 54, 65, 73, 87, 94]},
-      "validation": "Math.round(A/10)*10",
-      "hint": "Is it closer to the ten below or above?"
+      "problemText": "50% of {A} = ?",
+      "variables": {"A": [24, 36, 48, 60, 80, 100, 120, 150, 200]},
+      "validation": "A/2",
+      "hint": "50% is the same as half"
+    },
+    {
+      "id": "var-twenty-five-percent",
+      "level": 5,
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "25% of {A} = ?",
+      "variables": {"A": [20, 40, 60, 80, 100, 120, 200, 400]},
+      "validation": "A/4",
+      "hint": "25% is a quarter"
     },
     {
       "id": "var-consecutive-sum",
+      "level": 4,
       "visual": "equation",
       "interaction": "numpad",
       "problemText": "{A} + {B} + {C} = ?",
@@ -247,16 +394,8 @@
       "hint": "Add three consecutive numbers"
     },
     {
-      "id": "var-multiply-then-sub",
-      "visual": "equation",
-      "interaction": "numpad",
-      "problemText": "{A} × {B} - {C} = ?",
-      "variables": {"A": [3, 4, 5, 6], "B": [3, 4, 5, 6], "C": [1, 2, 3, 5]},
-      "validation": "A*B-C",
-      "hint": "Multiply first, then subtract"
-    },
-    {
       "id": "var-cube-small",
+      "level": 5,
       "visual": "equation",
       "interaction": "numpad",
       "problemText": "{A} × {A} × {A} = ?",
@@ -266,6 +405,7 @@
     },
     {
       "id": "var-factor-pairs",
+      "level": 3,
       "visual": "equation",
       "interaction": "numpad",
       "problemText": "{C} = {A} × ?",
@@ -273,6 +413,37 @@
       "derived": {"C": "A*B"},
       "validation": "B",
       "hint": "Divide the big number by the small one"
+    },
+    {
+      "id": "var-word-per-item",
+      "level": 4,
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{C} crystals split into bags of {A}. How many bags?",
+      "variables": {"A": [3, 4, 5, 6], "B": [3, 4, 5, 6, 7, 8]},
+      "derived": {"C": "A*B"},
+      "validation": "B",
+      "hint": "Divide total by bag size"
+    },
+    {
+      "id": "var-word-profit",
+      "level": 5,
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "Buy for {A}, sell for {B}. Profit × {C} items?",
+      "variables": {"A": [5, 8, 10, 12], "B": [10, 15, 18, 20], "C": [2, 3, 4, 5]},
+      "validation": "(B-A)*C",
+      "hint": "Find profit per item, then multiply"
+    },
+    {
+      "id": "var-power-of-two",
+      "level": 5,
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "2 to the power of {A} = ?",
+      "variables": {"A": [2, 3, 4, 5, 6, 7]},
+      "validation": "Math.pow(2,A)",
+      "hint": "Multiply 2 by itself that many times"
     }
   ]
 }
