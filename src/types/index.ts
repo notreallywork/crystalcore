@@ -72,6 +72,8 @@ export interface MathProblem {
   interaction: InteractionType;
   problemText: string | null;
   variables?: Record<string, number[]>;
+  /** Derived variables computed from base variables, e.g. {"C": "A*B"} */
+  derived?: Record<string, string>;
   validation: string | { target: number; tolerance: number };
   hint: string;
   setup?: {

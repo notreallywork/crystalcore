@@ -6,64 +6,22 @@
   "reward": 10,
   "templates": [
     {
-      "id": "counting-merge",
+      "id": "drag-add-small",
       "visual": "crystal-merge",
       "interaction": "drag",
       "problemText": null,
-      "setup": {
-        "pileA": {"count": 3, "color": "blue", "shape": "hex"},
-        "pileB": {"count": 4, "color": "red", "shape": "hex"}
-      },
-      "validation": {"target": 7, "tolerance": 0},
-      "hint": "Drag all crystals to the center socket"
+      "variables": {"A": [1, 2, 3, 4, 5], "B": [1, 2, 3, 4, 5]},
+      "validation": "A+B",
+      "hint": "Tap to merge all the crystals together"
     },
     {
-      "id": "counting-merge-2",
+      "id": "drag-add-medium",
       "visual": "crystal-merge",
       "interaction": "drag",
       "problemText": null,
-      "setup": {
-        "pileA": {"count": 2, "color": "green", "shape": "hex"},
-        "pileB": {"count": 5, "color": "yellow", "shape": "hex"}
-      },
-      "validation": {"target": 7, "tolerance": 0},
-      "hint": "Drag all crystals to the center socket"
-    },
-    {
-      "id": "counting-merge-3",
-      "visual": "crystal-merge",
-      "interaction": "drag",
-      "problemText": null,
-      "setup": {
-        "pileA": {"count": 4, "color": "purple", "shape": "hex"},
-        "pileB": {"count": 3, "color": "orange", "shape": "hex"}
-      },
-      "validation": {"target": 7, "tolerance": 0},
-      "hint": "Drag all crystals to the center socket"
-    },
-    {
-      "id": "counting-merge-4",
-      "visual": "crystal-merge",
-      "interaction": "drag",
-      "problemText": null,
-      "setup": {
-        "pileA": {"count": 1, "color": "cyan", "shape": "hex"},
-        "pileB": {"count": 6, "color": "pink", "shape": "hex"}
-      },
-      "validation": {"target": 7, "tolerance": 0},
-      "hint": "Drag all crystals to the center socket"
-    },
-    {
-      "id": "counting-merge-5",
-      "visual": "crystal-merge",
-      "interaction": "drag",
-      "problemText": null,
-      "setup": {
-        "pileA": {"count": 5, "color": "blue", "shape": "hex"},
-        "pileB": {"count": 4, "color": "green", "shape": "hex"}
-      },
-      "validation": {"target": 9, "tolerance": 0},
-      "hint": "Drag all crystals to the center socket"
+      "variables": {"A": [3, 4, 5, 6], "B": [3, 4, 5, 6]},
+      "validation": "A+B",
+      "hint": "Count all the crystals together"
     },
     {
       "id": "var-add-small",
@@ -84,6 +42,15 @@
       "hint": "Start at the bigger number and count up"
     },
     {
+      "id": "var-add-to-ten",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} + {B} = ?",
+      "variables": {"A": [5, 6, 7, 8, 9], "B": [1, 2, 3, 4, 5]},
+      "validation": "A+B",
+      "hint": "Start at the bigger number"
+    },
+    {
       "id": "var-sub-easy",
       "visual": "equation",
       "interaction": "numpad",
@@ -97,7 +64,7 @@
       "visual": "equation",
       "interaction": "numpad",
       "problemText": "{A} - {B} = ?",
-      "variables": {"A": [7, 8, 9, 10], "B": [2, 3, 4, 5]},
+      "variables": {"A": [7, 8, 9, 10, 11, 12], "B": [2, 3, 4, 5]},
       "validation": "A-B",
       "hint": "Count backwards from the first number"
     },
@@ -106,7 +73,7 @@
       "visual": "equation",
       "interaction": "numpad",
       "problemText": "{A} + {A} = ?",
-      "variables": {"A": [1, 2, 3, 4, 5]},
+      "variables": {"A": [1, 2, 3, 4, 5, 6, 7, 8, 9]},
       "validation": "A+A",
       "hint": "Double the number!"
     },
@@ -115,7 +82,7 @@
       "visual": "number-line",
       "interaction": "numpad",
       "problemText": "Start at {A}. Jump forward {B}. Where?",
-      "variables": {"A": [1, 2, 3, 4, 5], "B": [1, 2, 3, 4]},
+      "variables": {"A": [1, 2, 3, 4, 5, 6], "B": [1, 2, 3, 4, 5]},
       "validation": "A+B",
       "hint": "Count forward from where you start"
     },
@@ -124,7 +91,7 @@
       "visual": "number-line",
       "interaction": "numpad",
       "problemText": "Start at {A}. Jump back {B}. Where?",
-      "variables": {"A": [5, 6, 7, 8, 9], "B": [1, 2, 3]},
+      "variables": {"A": [5, 6, 7, 8, 9, 10], "B": [1, 2, 3, 4]},
       "validation": "A-B",
       "hint": "Count backward from where you start"
     },
@@ -132,82 +99,11 @@
       "id": "var-missing-add",
       "visual": "equation",
       "interaction": "numpad",
-      "problemText": "{A} + ? = {B}",
-      "variables": {"A": [1, 2, 3, 4], "B": [5, 6, 7, 8, 9]},
-      "validation": "B-A",
+      "problemText": "{A} + ? = {C}",
+      "variables": {"A": [1, 2, 3, 4, 5], "B": [1, 2, 3, 4, 5]},
+      "derived": {"C": "A+B"},
+      "validation": "B",
       "hint": "What do you add to get the answer?"
-    },
-    {
-      "id": "addition-concrete-1",
-      "visual": "number-line",
-      "interaction": "numpad",
-      "problemText": "Start at 3. Jump forward 2. Where do you land?",
-      "validation": {"target": 5, "tolerance": 0},
-      "hint": "Count forward: 3... 4... 5"
-    },
-    {
-      "id": "addition-concrete-2",
-      "visual": "number-line",
-      "interaction": "numpad",
-      "problemText": "Start at 5. Jump forward 3. Where do you land?",
-      "validation": {"target": 8, "tolerance": 0},
-      "hint": "Count forward: 5... 6... 7... 8"
-    },
-    {
-      "id": "simple-addition-1",
-      "visual": "equation",
-      "interaction": "numpad",
-      "problemText": "2 + 3 = ?",
-      "validation": {"target": 5, "tolerance": 0},
-      "hint": "Use your fingers to count"
-    },
-    {
-      "id": "simple-addition-2",
-      "visual": "equation",
-      "interaction": "numpad",
-      "problemText": "4 + 2 = ?",
-      "validation": {"target": 6, "tolerance": 0},
-      "hint": "Use your fingers to count"
-    },
-    {
-      "id": "counting-objects-1",
-      "visual": "objects",
-      "interaction": "numpad",
-      "problemText": "How many stars? ★★★★",
-      "validation": {"target": 4, "tolerance": 0},
-      "hint": "Count each star one by one"
-    },
-    {
-      "id": "counting-objects-2",
-      "visual": "objects",
-      "interaction": "numpad",
-      "problemText": "How many hearts? ♥♥♥♥♥",
-      "validation": {"target": 5, "tolerance": 0},
-      "hint": "Count each heart one by one"
-    },
-    {
-      "id": "counting-objects-3",
-      "visual": "objects",
-      "interaction": "numpad",
-      "problemText": "How many diamonds? ◆◆◆◆◆◆",
-      "validation": {"target": 6, "tolerance": 0},
-      "hint": "Count each diamond one by one"
-    },
-    {
-      "id": "subtraction-simple-1",
-      "visual": "equation",
-      "interaction": "numpad",
-      "problemText": "5 - 2 = ?",
-      "validation": {"target": 3, "tolerance": 0},
-      "hint": "Start with 5, take away 2"
-    },
-    {
-      "id": "subtraction-simple-2",
-      "visual": "equation",
-      "interaction": "numpad",
-      "problemText": "7 - 3 = ?",
-      "validation": {"target": 4, "tolerance": 0},
-      "hint": "Start with 7, take away 3"
     },
     {
       "id": "var-ten-add",
@@ -219,13 +115,123 @@
       "hint": "Just put a 1 in front!"
     },
     {
-      "id": "var-compare",
+      "id": "var-three-add",
       "visual": "equation",
       "interaction": "numpad",
-      "problemText": "{A} + {B} + 1 = ?",
-      "variables": {"A": [1, 2, 3], "B": [1, 2, 3]},
-      "validation": "A+B+1",
+      "problemText": "{A} + {B} + {C} = ?",
+      "variables": {"A": [1, 2, 3], "B": [1, 2, 3], "C": [1, 2, 3]},
+      "validation": "A+B+C",
       "hint": "Add all three numbers"
+    },
+    {
+      "id": "var-word-add",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "You have {A} crystals and find {B} more. How many?",
+      "variables": {"A": [2, 3, 4, 5, 6], "B": [1, 2, 3, 4, 5]},
+      "validation": "A+B",
+      "hint": "Add them together"
+    },
+    {
+      "id": "var-word-sub",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "You have {A} cookies and eat {B}. How many left?",
+      "variables": {"A": [5, 6, 7, 8, 9, 10], "B": [1, 2, 3, 4]},
+      "validation": "A-B",
+      "hint": "Take away from what you started with"
+    },
+    {
+      "id": "var-word-total",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} red ships and {B} blue ships. How many ships?",
+      "variables": {"A": [1, 2, 3, 4, 5], "B": [1, 2, 3, 4, 5]},
+      "validation": "A+B",
+      "hint": "Count all the ships together"
+    },
+    {
+      "id": "var-word-left",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} stars. {B} fall down. How many stay?",
+      "variables": {"A": [6, 7, 8, 9, 10], "B": [1, 2, 3, 4]},
+      "validation": "A-B",
+      "hint": "Take away the ones that fell"
+    },
+    {
+      "id": "var-next-number",
+      "visual": "number-line",
+      "interaction": "numpad",
+      "problemText": "What comes after {A}?",
+      "variables": {"A": [3, 5, 7, 9, 11, 13, 15, 19]},
+      "validation": "A+1",
+      "hint": "Count one more"
+    },
+    {
+      "id": "var-before-number",
+      "visual": "number-line",
+      "interaction": "numpad",
+      "problemText": "What comes before {A}?",
+      "variables": {"A": [4, 6, 8, 10, 12, 14, 16, 20]},
+      "validation": "A-1",
+      "hint": "Count one less"
+    },
+    {
+      "id": "var-half-even",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "Share {A} crystals equally between 2 friends. How many each?",
+      "variables": {"A": [2, 4, 6, 8, 10, 12]},
+      "validation": "A/2",
+      "hint": "Split the number in half"
+    },
+    {
+      "id": "var-count-by-two",
+      "visual": "number-line",
+      "interaction": "numpad",
+      "problemText": "Count by 2s: {A}, {C}, ?",
+      "variables": {"A": [2, 4, 6, 8, 10]},
+      "derived": {"C": "A+2"},
+      "validation": "A+4",
+      "hint": "Add 2 more each time"
+    },
+    {
+      "id": "var-count-by-five",
+      "visual": "number-line",
+      "interaction": "numpad",
+      "problemText": "Count by 5s: {A}, {C}, ?",
+      "variables": {"A": [5, 10, 15, 20]},
+      "derived": {"C": "A+5"},
+      "validation": "A+10",
+      "hint": "Add 5 more each time"
+    },
+    {
+      "id": "var-how-many-more",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "How many more is {B} than {A}?",
+      "variables": {"A": [1, 2, 3, 4], "B": [5, 6, 7, 8, 9]},
+      "validation": "B-A",
+      "hint": "Subtract the smaller from the bigger"
+    },
+    {
+      "id": "var-simple-times-two",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "{A} groups of 2. How many total?",
+      "variables": {"A": [2, 3, 4, 5]},
+      "validation": "A*2",
+      "hint": "Add 2 that many times"
+    },
+    {
+      "id": "var-word-space",
+      "visual": "equation",
+      "interaction": "numpad",
+      "problemText": "A rocket needs {A} fuel cells. You have {B}. How many more?",
+      "variables": {"A": [7, 8, 9, 10], "B": [2, 3, 4, 5]},
+      "validation": "A-B",
+      "hint": "Subtract what you have from what you need"
     }
   ]
 }
