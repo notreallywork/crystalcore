@@ -1693,6 +1693,9 @@ export class RaceEngine {
   }
 
   private renderShip(ctx: CanvasRenderingContext2D) {
+    const W = SHIP_WIDTH;
+    const H = SHIP_HEIGHT;
+
     // Respawn blink
     if (this.isInvincible && Math.floor(this.respawnFlashTimer * 8) % 2 === 0) {
       return;
@@ -1701,76 +1704,290 @@ export class RaceEngine {
     ctx.save();
     ctx.translate(this.ship.x, this.ship.y);
 
-    const color = this.profile.cosmetics.color;
+    // Ship glow
+    ctx.shadowColor = this.profile.cosmetics.color;
+    ctx.shadowBlur = this.isBoosting ? 25 : 12;
+    ctx.fillStyle = this.profile.cosmetics.color;
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.lineWidth = 1.5;
 
-    // Engine trail
-    if (this.profile.cosmetics.trail !== 'none' || true) {
-      const trailLen = this.isBoosting ? 50 : 30;
-      const trailGrad = ctx.createLinearGradient(0, SHIP_HEIGHT * 0.3, 0, SHIP_HEIGHT * 0.3 + trailLen);
-      trailGrad.addColorStop(0, this.isBoosting ? '#00FFFF' : color);
-      trailGrad.addColorStop(1, 'transparent');
-      ctx.globalAlpha = 0.6;
-      ctx.fillStyle = trailGrad;
+    switch (this.profile.cosmetics.shipShape) {
+      // Default shuttle: slightly rounded body with swept fins
+      case 'default':
+      default: {
+        ctx.beginPath();
+        ctx.moveTo(0, -H / 2);
+        ctx.lineTo(W * 0.3, -H * 0.1);
+        ctx.lineTo(W * 0.5, H * 0.4);
+        ctx.lineTo(W * 0.25, H * 0.2);
+        ctx.lineTo(0, H * 0.45);
+        ctx.lineTo(-W * 0.25, H * 0.2);
+        ctx.lineTo(-W * 0.5, H * 0.4);
+        ctx.lineTo(-W * 0.3, -H * 0.1);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
+
+      // Diamond
+      case 'diamond': {
+        ctx.beginPath();
+        ctx.moveTo(0, -H / 2);
+        ctx.lineTo(W / 2, 0);
+        ctx.lineTo(0, H / 2);
+        ctx.lineTo(-W / 2, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
+
+      // Rocket: narrow body + side fins
+      case 'rocket': {
+        ctx.beginPath();
+        ctx.moveTo(0, -H / 2);
+        ctx.lineTo(W * 0.2, -H * 0.15);
+        ctx.lineTo(W * 0.2, H * 0.25);
+        ctx.lineTo(W * 0.5, H * 0.5);
+        ctx.lineTo(W * 0.2, H * 0.3);
+        ctx.lineTo(-W * 0.2, H * 0.3);
+        ctx.lineTo(-W * 0.5, H * 0.5);
+        ctx.lineTo(-W * 0.2, H * 0.25);
+        ctx.lineTo(-W * 0.2, -H * 0.15);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Nose window
+        ctx.globalAlpha = 0.4;
+        ctx.fillStyle = '#FFF';
+        ctx.beginPath();
+        ctx.ellipse(0, -H * 0.28, W * 0.1, H * 0.08, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = this.profile.cosmetics.color;
+        break;
+      }
+
+      // UFO: saucer shape
+      case 'ufo': {
+        // Lower saucer body
+        ctx.beginPath();
+        ctx.ellipse(0, H * 0.1, W * 0.5, H * 0.22, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // Dome
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = '#AADDFF';
+        ctx.beginPath();
+        ctx.ellipse(0, -H * 0.05, W * 0.25, H * 0.2, 0, Math.PI, 0);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = this.profile.cosmetics.color;
+        break;
+      }
+
+      // Star: 5-pointed star
+      case 'star': {
+        const outerR = H / 2;
+        const innerR = H * 0.2;
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const outerAngle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+          const innerAngle = outerAngle + Math.PI / 5;
+          if (i === 0) ctx.moveTo(Math.cos(outerAngle) * outerR, Math.sin(outerAngle) * outerR);
+          else ctx.lineTo(Math.cos(outerAngle) * outerR, Math.sin(outerAngle) * outerR);
+          ctx.lineTo(Math.cos(innerAngle) * innerR, Math.sin(innerAngle) * innerR);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
+
+      // Crazy Cat: cat-eared circle
+      case 'crazy-cat': {
+        // Body (circle)
+        ctx.beginPath();
+        ctx.arc(0, 0, H * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // Left ear
+        ctx.beginPath();
+        ctx.moveTo(-W * 0.3, -H * 0.15);
+        ctx.lineTo(-W * 0.15, -H * 0.5);
+        ctx.lineTo(0, -H * 0.2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Right ear
+        ctx.beginPath();
+        ctx.moveTo(W * 0.3, -H * 0.15);
+        ctx.lineTo(W * 0.15, -H * 0.5);
+        ctx.lineTo(0, -H * 0.2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Eyes
+        ctx.fillStyle = '#FFF';
+        ctx.beginPath();
+        ctx.arc(-W * 0.1, -H * 0.05, 3, 0, Math.PI * 2);
+        ctx.arc(W * 0.1, -H * 0.05, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = this.profile.cosmetics.color;
+        break;
+      }
+
+      // Stealth: angular stealth bomber shape
+      case 'stealth': {
+        ctx.beginPath();
+        ctx.moveTo(0, -H * 0.3);
+        ctx.lineTo(W * 0.5, H * 0.2);
+        ctx.lineTo(W * 0.4, H * 0.25);
+        ctx.lineTo(0, H * 0.1);
+        ctx.lineTo(-W * 0.4, H * 0.25);
+        ctx.lineTo(-W * 0.5, H * 0.2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
+
+      // Phantom: ghostly wispy shape
+      case 'phantom': {
+        ctx.globalAlpha = 0.85;
+        ctx.beginPath();
+        ctx.moveTo(0, -H * 0.4);
+        ctx.quadraticCurveTo(W * 0.4, -H * 0.1, W * 0.3, H * 0.3);
+        ctx.quadraticCurveTo(W * 0.15, H * 0.15, 0, H * 0.4);
+        ctx.quadraticCurveTo(-W * 0.15, H * 0.15, -W * 0.3, H * 0.3);
+        ctx.quadraticCurveTo(-W * 0.4, -H * 0.1, 0, -H * 0.4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        break;
+      }
+
+      // Dragon: winged shape
+      case 'dragon': {
+        // Body
+        ctx.beginPath();
+        ctx.moveTo(0, -H * 0.45);
+        ctx.lineTo(W * 0.12, -H * 0.1);
+        ctx.lineTo(W * 0.12, H * 0.35);
+        ctx.lineTo(0, H * 0.45);
+        ctx.lineTo(-W * 0.12, H * 0.35);
+        ctx.lineTo(-W * 0.12, -H * 0.1);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Right wing
+        ctx.beginPath();
+        ctx.moveTo(W * 0.12, -H * 0.05);
+        ctx.lineTo(W * 0.55, -H * 0.25);
+        ctx.lineTo(W * 0.45, H * 0.15);
+        ctx.lineTo(W * 0.12, H * 0.1);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Left wing
+        ctx.beginPath();
+        ctx.moveTo(-W * 0.12, -H * 0.05);
+        ctx.lineTo(-W * 0.55, -H * 0.25);
+        ctx.lineTo(-W * 0.45, H * 0.15);
+        ctx.lineTo(-W * 0.12, H * 0.1);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
+
+      // Ninja: 4-pointed shuriken
+      case 'ninja': {
+        const nr = H / 2;
+        const nir = H * 0.18;
+        ctx.beginPath();
+        for (let i = 0; i < 4; i++) {
+          const outerA = (i * Math.PI) / 2 - Math.PI / 2;
+          const innerA = outerA + Math.PI / 4;
+          if (i === 0) ctx.moveTo(Math.cos(outerA) * nr, Math.sin(outerA) * nr);
+          else ctx.lineTo(Math.cos(outerA) * nr, Math.sin(outerA) * nr);
+          ctx.lineTo(Math.cos(innerA) * nir, Math.sin(innerA) * nir);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
+    }
+
+    // Trail rendering based on cosmetic trail type
+    const trail = this.profile.cosmetics.trail;
+    if (trail !== 'none') {
+      const ty0 = H * 0.2;
+      const ty1 = H * 0.5 + 45;
+      const gradient = ctx.createLinearGradient(0, ty0, 0, ty1);
+
+      switch (trail) {
+        case 'fire':
+          gradient.addColorStop(0, '#FF6600');
+          gradient.addColorStop(0.5, '#FF2200');
+          gradient.addColorStop(1, 'transparent');
+          break;
+        case 'rainbow':
+          gradient.addColorStop(0,    '#FF0000');
+          gradient.addColorStop(0.17, '#FF8800');
+          gradient.addColorStop(0.33, '#FFFF00');
+          gradient.addColorStop(0.5,  '#00FF00');
+          gradient.addColorStop(0.67, '#0088FF');
+          gradient.addColorStop(0.83, '#8800FF');
+          gradient.addColorStop(1,    'transparent');
+          break;
+        case 'electric':
+          gradient.addColorStop(0, '#00FFFF');
+          gradient.addColorStop(0.5, '#AAFFFF');
+          gradient.addColorStop(1, 'transparent');
+          break;
+        case 'void':
+          gradient.addColorStop(0, '#6600AA');
+          gradient.addColorStop(0.5, '#220044');
+          gradient.addColorStop(1, 'transparent');
+          break;
+        case 'nebula':
+          gradient.addColorStop(0, '#FF00CC');
+          gradient.addColorStop(0.5, '#8800FF');
+          gradient.addColorStop(1, 'transparent');
+          break;
+        case 'sparkle':
+        default:
+          gradient.addColorStop(0, '#FFFFFF');
+          gradient.addColorStop(0.4, '#AADDFF');
+          gradient.addColorStop(1, 'transparent');
+          break;
+      }
+
+      ctx.globalAlpha = 0.55;
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = gradient;
       ctx.beginPath();
-      ctx.moveTo(-8, SHIP_HEIGHT * 0.25);
-      ctx.lineTo(0, SHIP_HEIGHT * 0.25 + trailLen);
-      ctx.lineTo(8, SHIP_HEIGHT * 0.25);
+      ctx.moveTo(-W * 0.28, ty0);
+      ctx.lineTo(0, ty1);
+      ctx.lineTo(W * 0.28, ty0);
       ctx.closePath();
       ctx.fill();
       ctx.globalAlpha = 1;
     }
 
-    // Ship glow
-    ctx.shadowColor = color;
-    ctx.shadowBlur = this.isBoosting ? 25 : 14;
-
-    // Main body
-    ctx.fillStyle = color;
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 1.5;
-
-    // Ship shape - sleek fighter
-    ctx.beginPath();
-    ctx.moveTo(0, -SHIP_HEIGHT / 2);           // nose
-    ctx.lineTo(8, -SHIP_HEIGHT * 0.15);        // right neck
-    ctx.lineTo(SHIP_WIDTH / 2, SHIP_HEIGHT * 0.2);   // right wing tip
-    ctx.lineTo(SHIP_WIDTH * 0.3, SHIP_HEIGHT * 0.25);  // right wing inner
-    ctx.lineTo(SHIP_WIDTH * 0.25, SHIP_HEIGHT * 0.4);   // right engine
-    ctx.lineTo(-SHIP_WIDTH * 0.25, SHIP_HEIGHT * 0.4);  // left engine
-    ctx.lineTo(-SHIP_WIDTH * 0.3, SHIP_HEIGHT * 0.25);  // left wing inner
-    ctx.lineTo(-SHIP_WIDTH / 2, SHIP_HEIGHT * 0.2);   // left wing tip
-    ctx.lineTo(-8, -SHIP_HEIGHT * 0.15);       // left neck
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    // Cockpit
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = '#FFFFFF';
-    ctx.globalAlpha = 0.4;
-    ctx.beginPath();
-    ctx.ellipse(0, -SHIP_HEIGHT * 0.2, 4, 8, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Wing details
-    ctx.globalAlpha = 0.3;
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(-4, -SHIP_HEIGHT * 0.1);
-    ctx.lineTo(-SHIP_WIDTH * 0.35, SHIP_HEIGHT * 0.18);
-    ctx.moveTo(4, -SHIP_HEIGHT * 0.1);
-    ctx.lineTo(SHIP_WIDTH * 0.35, SHIP_HEIGHT * 0.18);
-    ctx.stroke();
-
     // Engine glow
     ctx.globalAlpha = 0.9;
-    const engineGlow = ctx.createRadialGradient(0, SHIP_HEIGHT * 0.42, 2, 0, SHIP_HEIGHT * 0.42, 10);
+    const engineGlow = ctx.createRadialGradient(0, H / 2 + 5, 2, 0, H / 2 + 5, 12);
     engineGlow.addColorStop(0, this.isBoosting ? '#00FFFF' : '#00D9FF');
     engineGlow.addColorStop(1, 'transparent');
     ctx.fillStyle = engineGlow;
+    ctx.shadowBlur = 0;
     ctx.beginPath();
-    ctx.arc(0, SHIP_HEIGHT * 0.42, 10, 0, Math.PI * 2);
+    ctx.arc(0, H / 2 + 5, 12, 0, Math.PI * 2);
     ctx.fill();
 
     // Shield ring when invincible
@@ -1779,7 +1996,7 @@ export class RaceEngine {
       ctx.strokeStyle = '#00FFFF';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.ellipse(0, 0, SHIP_WIDTH * 0.6, SHIP_HEIGHT * 0.55, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 0, W * 0.6, H * 0.55, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
 

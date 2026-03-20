@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Profile, MathProblem, Gate } from '@/types';
 import { MathValidator } from '@/engines/MathValidator';
+import { DifficultyScaler } from '@/engines/DifficultyScaler';
+import { useGameStore } from '@/stores/gameStore';
 import emersonGates from '@/content/gates/emerson.json';
 import kyraGates from '@/content/gates/kyra.json';
 
@@ -26,8 +28,12 @@ export function GateOverlay({ gate, profile, onSolve, onSkip, isBossChallenge = 
   const onSolveRef = useRef(onSolve);
   onSolveRef.current = onSolve;
 
+  const currentRun = useGameStore((s) => s.currentRun);
+  const effectiveDifficulty = DifficultyScaler.getEffectiveDifficulty(profile, currentRun);
+
   const isYoung = profile.age <= 8;
-  const solveTime = isYoung ? emersonGates.solveTime : kyraGates.solveTime;
+  const baseSolveTime = isYoung ? emersonGates.solveTime : kyraGates.solveTime;
+  const solveTime = DifficultyScaler.getSolveTime(effectiveDifficulty, baseSolveTime);
   const templates = isYoung ? emersonGates.templates : kyraGates.templates;
 
   // Clean up timeout on unmount
@@ -43,22 +49,23 @@ export function GateOverlay({ gate, profile, onSolve, onSkip, isBossChallenge = 
     if (gate.problem) {
       setProblem(gate.problem);
     } else {
-      const randomTemplate = templates[Math.floor(Math.random() * templates.length)];
-      const generatedProblem = MathValidator.generateProblemFromTemplate(randomTemplate as MathProblem);
+      const generatedProblem = MathValidator.getRandomProblem(
+        templates as MathProblem[],
+        effectiveDifficulty,
+      );
       setProblem(generatedProblem);
     }
     setTimeLeft(isBossChallenge ? solveTime + 3 : solveTime);
     solvedRef.current = false;
   }, [gate.id]);
 
-  // Pure countdown — no side effects inside the updater
+  // Countdown timer — triggers timeout via ref to prevent double-fire
   useEffect(() => {
     if (solved !== null) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 0.1) {
-          // Use ref to prevent double-fire from interval
           if (!solvedRef.current) {
             solvedRef.current = true;
             setSolved(false);

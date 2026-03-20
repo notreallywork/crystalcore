@@ -153,6 +153,9 @@ export const useGameStore = create<GameStore>()(
             boostTimeLeft: 0,
             bossesDefeated: 0,
             rocksDestroyed: 0,
+            correctStreak: 0,
+            wrongStreak: 0,
+            sessionDifficulty: profile.difficulty,
           },
         });
       },
@@ -221,12 +224,34 @@ export const useGameStore = create<GameStore>()(
       passGate: (correct) => {
         set((state) => {
           if (!state.currentRun) return state;
+
+          const profile = state.profiles.find((p) => p.id === state.activeProfileId);
+          const baseDifficulty = profile?.difficulty ?? 1;
+
+          // Update streaks
+          const newCorrectStreak = correct ? state.currentRun.correctStreak + 1 : 0;
+          const newWrongStreak = correct ? 0 : state.currentRun.wrongStreak + 1;
+
+          // Adaptive session difficulty: ramps up on streaks, drops on failures
+          let sessionDiff = state.currentRun.sessionDifficulty;
+          if (correct && newCorrectStreak >= 3 && newCorrectStreak % 2 === 1) {
+            // Every 2 correct after first 3 → bump up (3, 5, 7, ...)
+            sessionDiff = Math.min(sessionDiff + 1, Math.min(baseDifficulty + 2, 5));
+          }
+          if (!correct && newWrongStreak >= 2) {
+            // 2 wrong in a row → drop
+            sessionDiff = Math.max(sessionDiff - 1, Math.max(baseDifficulty - 1, 1));
+          }
+
           return {
             currentRun: {
               ...state.currentRun,
               gatesPassed: state.currentRun.gatesPassed + 1,
               gatesAttempted: state.currentRun.gatesAttempted + 1,
               correctAnswers: state.currentRun.correctAnswers + (correct ? 1 : 0),
+              correctStreak: newCorrectStreak,
+              wrongStreak: newWrongStreak,
+              sessionDifficulty: sessionDiff,
             },
           };
         });
@@ -487,28 +512,35 @@ export const useGameStore = create<GameStore>()(
           return { profiles, activeProfileId: state.activeProfile ?? null, version: CURRENT_VERSION, currentRun: null };
         }
 
-        // v2 → v3: add branchProgress, ownedCosmetics, weaponLevel to existing profiles
+        // v2 → v3: add weaponLevel, branchProgress, ownedCosmetics, completedStages
         if (version < 3) {
-          const profiles = ((state.profiles as Record<string, unknown>[]) ?? []).map((raw) => ({
-            ...raw,
-            branchProgress: { stats: 0, colors: 0, trails: 0, shapes: 0 },
-            ownedCosmetics: { colors: [], trails: [], shapes: [] },
-            stats: {
-              ...((raw.stats as Record<string, unknown>) ?? {}),
-              weaponLevel: ((raw.stats as Record<string, unknown>)?.weaponLevel as number) || 1,
-            },
-            completedStages: (raw.completedStages as string[]) || [],
-          }));
+          const profiles = ((state.profiles as Record<string, unknown>[]) ?? []).map((raw) => {
+            const p = raw as Partial<Profile>;
+            return {
+              ...raw,
+              stats: {
+                ...(p.stats || {}),
+                weaponLevel: p.stats?.weaponLevel || 1,
+              },
+              branchProgress: { stats: 0, colors: 0, trails: 0, shapes: 0 },
+              ownedCosmetics: { colors: [], trails: [], shapes: [] },
+              completedStages: p.completedStages || [],
+            };
+          });
           return { ...state, profiles, version: CURRENT_VERSION };
         }
 
-        // v3 → v4: add completedStages to profiles
+        // v3 → v4: add completedStages to profiles that may be missing it
         if (version < 4) {
-          const profiles = ((state.profiles as Record<string, unknown>[]) ?? []).map((raw) => ({
-            ...raw,
-            completedStages: (raw.completedStages as string[]) || [],
-          }));
-          return { ...state, profiles, version: CURRENT_VERSION };
+          const profiles = (state.profiles as Profile[]) || [];
+          return {
+            ...state,
+            profiles: profiles.map((p) => ({
+              ...p,
+              completedStages: p.completedStages || [],
+            })),
+            version: CURRENT_VERSION,
+          };
         }
 
         return state;
